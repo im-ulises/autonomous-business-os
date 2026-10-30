@@ -26,10 +26,11 @@ import {
   Moon,
   ChevronUp,
 } from "lucide-react";
-import { demoCompanies, demoMissions, demoProjects, sampleDocs } from "@/lib/demo";
-import type { Company, LocalDoc, Mission, Project, Store, View } from "@/lib/types";
+import { demoClients, demoCompanies, demoMissions, demoProjects, sampleDocs } from "@/lib/demo";
+import { ProjectManager } from "@/app/components/ProjectManager";
+import type { Client, Company, LocalDoc, Mission, Project, ProjectDetails, Store, View } from "@/lib/types";
 
-const INITIAL: Store = { companies: [], projects: [], missions: [], localDocs: [] };
+const INITIAL: Store = { companies: [], projects: [], missions: [], localDocs: [], clients: [], projectDetails: {} };
 const STORAGE_KEY = "autonomous-os-simple-ui-v1";
 type ProjectResumeNote = { text: string; savedAt: string };
 
@@ -147,7 +148,7 @@ export function OperatingConsole() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { store?: Partial<Store>; demoMode?: boolean; companyId?: string; theme?: "light" | "dark"; resumeNotes?: Record<string, ProjectResumeNote> };
-        setStore({ ...INITIAL, ...parsed.store });
+        setStore({ ...INITIAL, ...parsed.store, clients: parsed.store?.clients ?? [], projectDetails: parsed.store?.projectDetails ?? {} });
         if (typeof parsed.demoMode === "boolean") setDemoMode(parsed.demoMode);
         if (parsed.companyId) setCompanyId(parsed.companyId);
         if (parsed.resumeNotes && typeof parsed.resumeNotes === "object" && !Array.isArray(parsed.resumeNotes)) {
@@ -189,10 +190,14 @@ export function OperatingConsole() {
 
 
   const companies = useMemo(() => [...demoCompanies, ...store.companies], [store.companies]);
+  const clients = useMemo(() => {
+    const overrides = new Map(store.clients.map(client => [client.id, client]));
+    return [...demoClients.map(client => overrides.get(client.id) ?? client), ...store.clients.filter(client => !demoClients.some(demo => demo.id === client.id))];
+  }, [store.clients]);
   const company = companies.find((c) => c.id === companyId) ?? companies[0];
   const projects = useMemo(
-    () => [...(demoMode ? demoProjects : []), ...store.projects].filter((item) => item.companyId === company?.id),
-    [demoMode, store.projects, company?.id],
+    () => [...(demoMode ? demoProjects : []), ...store.projects].filter((item) => item.companyId === company?.id).map(item => ({ ...item, stage: store.projectDetails[item.id]?.stageOverride ?? item.stage })),
+    [demoMode, store.projects, store.projectDetails, company?.id],
   );
   const missions = useMemo(
     () => [...(demoMode ? demoMissions : []), ...store.missions].filter((item) => item.companyId === company?.id),
@@ -209,7 +214,7 @@ export function OperatingConsole() {
   const companyDocs = docs.filter(item => item.companyId === company?.id);
   const sharedDocs = docs.filter(item => item.companyId === "all");
   const effectiveDocId = docs.some(item => item.id === docId) ? docId : (companyDocs[0]?.id ?? sharedDocs[0]?.id ?? "overview");
-  const allProjects = [...(demoMode ? demoProjects : []), ...store.projects];
+  const allProjects = [...(demoMode ? demoProjects : []), ...store.projects].map(item => ({ ...item, stage: store.projectDetails[item.id]?.stageOverride ?? item.stage }));
   const allMissions = [...(demoMode ? demoMissions : []), ...store.missions];
   const globalOpenProjects = allProjects.filter(item => item.stage === "active" || item.stage === "planning").length;
   const resumeProjects = [...allProjects].sort((a, b) => {
@@ -350,9 +355,26 @@ export function OperatingConsole() {
   }
 
   function updateProjectStage(id: string, stage: Project["stage"]) {
-    setStore((current) => ({
+    setStore(current => ({
       ...current,
-      projects: current.projects.map((item) => (item.id === id ? { ...item, stage } : item)),
+      projects: current.projects.map(item => item.id === id ? { ...item, stage } : item),
+      projectDetails: { ...current.projectDetails, [id]: { ...(current.projectDetails[id] ?? {}), stageOverride: stage, updatedAt: new Date().toISOString() } },
+    }));
+  }
+
+  function updateProjectDetails(id: string, patch: Partial<ProjectDetails>) {
+    setStore(current => ({
+      ...current,
+      projectDetails: { ...current.projectDetails, [id]: { ...(current.projectDetails[id] ?? {}), ...patch, updatedAt: new Date().toISOString() } },
+    }));
+  }
+
+  function saveClient(client: Client) {
+    setStore(current => ({
+      ...current,
+      clients: current.clients.some(item => item.id === client.id)
+        ? current.clients.map(item => item.id === client.id ? client : item)
+        : [...current.clients, client],
     }));
   }
 
@@ -537,7 +559,7 @@ export function OperatingConsole() {
                           <span className="sana-postit-preview">{savedNote?.text || linkedMission?.outcome || project.description || "Agrega una nota para recordar el avance."}</span>
                         </button>
                         <div className="sana-postit-footer">
-                          <span className="sana-postit-stage">{STAGE_LABEL[project.stage]}{project.demo ? " · Demo" : ""}</span>
+                          <span className="sana-postit-stage">{STAGE_LABEL[project.stage]}{store.projectDetails[project.id]?.priority === "critical" ? " · Urgente" : store.projectDetails[project.id]?.priority === "high" ? " · Alta prioridad" : ""}{project.demo ? " · Demo" : ""}</span>
                           <button className="sana-postit-continue" type="button" onClick={() => continueProject(project)}>Continuar <ArrowUpRight size={15}/></button>
                         </div>
                         {expanded && <div className="sana-postit-details">
@@ -704,45 +726,20 @@ export function OperatingConsole() {
 
           {view === "projects" && (
             <>
-
-              <SectionHeader title="Proyectos" description={"Proyectos exclusivos de " + company?.name + "."} action={<button className="primary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
-              {focusedProjectId && projects.some(item => item.id === focusedProjectId) && (() => {
-                const focus = projects.find(item => item.id === focusedProjectId)!;
-                const note = resumeNotes[focus.id];
-                const related = missions.filter(item => item.projectId === focus.id);
-                return <section className="card sana-project-resume-panel">
-                  <div className="sana-project-resume-head"><div><span>RETOMANDO PROYECTO</span><h2>{focus.name}</h2></div><button className="sana-project-resume-dismiss" onClick={() => setFocusedProjectId(null)} aria-label="Cerrar detalle del proyecto"><X size={16}/></button></div>
-                  <p>{focus.description || "Sin descripción todavía."}</p>
-                  <div className="sana-project-resume-tags"><Badge>{STAGE_LABEL[focus.stage]}</Badge>{focus.demo && <Badge tone="amber">Ejemplo</Badge>}<Badge>{related.length} {related.length === 1 ? "misión" : "misiones"}</Badge></div>
-                  {note && <div className="sana-project-resume-note"><span>TU ÚLTIMA NOTA</span><p>{note.text}</p></div>}
-                  {related.length > 0 && <div className="sana-project-resume-related"><span>MISIONES VINCULADAS</span>{related.slice(0, 3).map(item => <p key={item.id}>{item.title}</p>)}<button onClick={() => navigate("missions")}>Abrir misiones <ArrowUpRight size={14}/></button></div>}
-                </section>;
-              })()}
-              <section className="card">
-                {projects.length === 0 ? (
-                  <EmptyState title="Sin proyectos" description="Agrega un proyecto para empezar a agrupar documentos y misiones." action={<button className="secondary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
-                ) : (
-                  <div className="simple-table">
-                    <div className="table-row table-head"><span>Proyecto</span><span>Estado</span><span>Creado</span></div>
-                    {projects.map((item) => (
-                      <div className="table-row" key={item.id}>
-                        <div>
-                          <strong>{item.name}</strong>
-                          <small>{item.description || "Sin descripción"}</small>
-                        </div>
-                        {item.demo ? (
-                          <Badge tone="amber">{STAGE_LABEL[item.stage]}</Badge>
-                        ) : (
-                          <select className="simple-select" value={item.stage} onChange={(event) => updateProjectStage(item.id, event.target.value as Project["stage"])}>
-                            {Object.entries(STAGE_LABEL).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
-                          </select>
-                        )}
-                        <span className="muted-inline">{new Date(item.createdAt).toLocaleDateString("es-MX")}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
+              <ProjectManager
+                company={company}
+                projects={projects}
+                missions={missions}
+                clients={clients.filter(client => client.companyId === company?.id)}
+                details={store.projectDetails}
+                initialProjectId={focusedProjectId}
+                onClearInitialProject={() => setFocusedProjectId(null)}
+                onNewProject={() => openModal("project")}
+                onStageChange={updateProjectStage}
+                onDetailsChange={updateProjectDetails}
+                onSaveClient={saveClient}
+                onGoMissions={() => navigate("missions")}
+              />
             </>
           )}
 

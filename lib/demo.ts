@@ -1,4 +1,4 @@
-import type { Company, Mission, Project } from "./types";
+import type { Client, Company, Mission, Project } from "./types";
 
 export const demoCompanies: Company[] = [
   { id: "evo", name: "EVO Studios", short: "EV", description: "Producción cinematográfica, IA y servicios digitales", accent: "#bca7ff", demo: true },
@@ -21,4 +21,9 @@ export const sampleDocs = [
   { id: "overview", name: "Business OS — Overview", path: "overview.md", companyId: "all", category: "Fundamentos" },
   { id: "engineering", name: "Engineering — Playbook", path: "engineering-playbook.md", companyId: "evo", category: "Procesos" },
   { id: "knowledge-contract", name: "Docs — Contrato de conocimiento", path: "knowledge-contract.md", companyId: "all", category: "Arquitectura" },
+];
+
+/** Public demonstration client — contact fields are intentionally blank. */
+export const demoClients: Client[] = [
+  { id: "client-bigmedia", companyId: "evo", name: "Big Media", description: "Medios exteriores, pantallas publicitarias y espectaculares.", industry: "Publicidad exterior", brandColor: "#455e9c", website: "", contactName: "", contactEmail: "", contactPhone: "", demo: true },
 ];

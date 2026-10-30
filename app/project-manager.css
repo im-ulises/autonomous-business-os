@@ -1,0 +1,195 @@
+
+
+/* Project Manager — Sana-like project board, task and mini CRM workspace. */
+.sana-shell .pm-shell{display:flex;flex-direction:column;gap:21px;color:#27272a;min-width:0;}
+.sana-shell .pm-titlebar{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;}
+.sana-shell .pm-titlebar h1{margin:5px 0 6px;font-size:30px;line-height:1.2;letter-spacing:-1.05px;font-weight:680;}
+.sana-shell .pm-titlebar p{font-size:12px;color:#8a8990;margin:0;line-height:1.5;}
+.sana-shell .pm-eyebrow{color:#a2a0a4;font-size:10px;letter-spacing:.075em;font-weight:680;}
+.sana-shell .pm-new-project,.sana-shell .pm-new-client{display:flex;align-items:center;justify-content:center;gap:8px;background:#252529;border:1px solid #252529;color:white;border-radius:10px;padding:11px 14px;font-size:11.5px;font-weight:650;white-space:nowrap;}
+.sana-shell .pm-new-client{background:#fff;color:#333;border-color:#e6e6e5;}
+.sana-shell .pm-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid #e9e9e7;border-radius:14px;overflow:hidden;background:#fff;}
+.sana-shell .pm-metrics>div{min-height:95px;padding:17px 20px;display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid #eeeeec;gap:7px;}
+.sana-shell .pm-metrics>div:last-child{border-right:0;}
+.sana-shell .pm-metrics>div span{font-size:11px;color:#96959b;}
+.sana-shell .pm-metrics>div strong{font-size:26px;line-height:1;font-weight:660;letter-spacing:-1px;}
+.sana-shell .pm-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;min-width:0;}
+.sana-shell .pm-view-options{display:flex;align-items:center;padding:3px;border:1px solid #e6e5e6;background:#f4f3f2;border-radius:11px;flex-shrink:0;}
+.sana-shell .pm-view-options button{display:flex;align-items:center;gap:7px;padding:9px 11px;background:transparent;color:#7b7a80;border:0;border-radius:8px;font-weight:580;font-size:11.5px;}
+.sana-shell .pm-view-options button.active{background:#fff;color:#26262a;box-shadow:0 1px 5px #25252514;}
+.sana-shell .pm-filters{display:flex;align-items:center;gap:9px;min-width:0;}
+.sana-shell .pm-search,.sana-shell .pm-filter{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e8e7e7;border-radius:9px;padding:9px 11px;color:#999;min-height:38px;}
+.sana-shell .pm-search input{width:175px;min-width:0;font-size:11px;background:transparent;border:0;outline:0;color:#333;}
+.sana-shell .pm-filter select{border:0;background:transparent;color:#666;outline:none;font-size:11px;max-width:125px;}
+.sana-shell .pm-board-wrap{min-width:0;overflow-x:auto;padding:0 1px 5px;scrollbar-color:#ddd transparent;}
+.sana-shell .pm-kanban{display:grid;grid-template-columns:repeat(5,minmax(173px,1fr));gap:10px;min-width:890px;align-items:start;}
+.sana-shell .pm-column{display:flex;flex-direction:column;min-height:320px;min-width:0;gap:11px;padding:12px 9px;border-radius:13px;background:#f5f5f4;border:1px solid #eeeeed;}
+.sana-shell .pm-column-head{padding:2px 4px 2px;}
+.sana-shell .pm-column-head>div{display:flex;align-items:center;gap:7px;}
+.sana-shell .pm-column-head strong{font-size:11px;font-weight:660;}
+.sana-shell .pm-column-head>small{display:block;margin:6px 0 0 17px;font-size:10px;color:#a2a0a4;}
+.sana-shell .pm-stage-indicator{width:9px;height:9px;border-radius:3px;background:#bbb;flex:none;}
+.sana-shell .pm-stage-indicator-idea{background:#b1b1b7;}
+.sana-shell .pm-stage-indicator-planning{background:#9985d1;}
+.sana-shell .pm-stage-indicator-active{background:#5db392;}
+.sana-shell .pm-stage-indicator-waiting{background:#e0a95c;}
+.sana-shell .pm-stage-indicator-completed{background:#7e9ba4;}
+.sana-shell .pm-column-count{padding:3px 7px;border-radius:6px;background:#fff;color:#8a8991;font-size:10px;font-weight:630;}
+.sana-shell .pm-column-cards{display:grid;gap:9px;align-content:start;min-height:220px;}
+.sana-shell .pm-board-card{position:relative;min-width:0;border:1px solid #e8e8e7;border-left:3px solid #c5c5c5;border-radius:11px;padding:13px 12px;text-align:left;background:#fff;color:#2c2c2f;display:flex;flex-direction:column;gap:11px;box-shadow:0 1px 3px #00000008;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease;}
+.sana-shell .pm-board-card:hover{transform:translateY(-1px);box-shadow:0 5px 15px #2525250e;}
+.sana-shell .pm-board-card:active{cursor:grabbing;}
+.sana-shell .pm-board-card.pm-priority-border-low{border-left-color:#78a5cf;}
+.sana-shell .pm-board-card.pm-priority-border-normal{border-left-color:#b1b1b5;}
+.sana-shell .pm-board-card.pm-priority-border-high{border-left-color:#e5a04d;}
+.sana-shell .pm-board-card.pm-priority-border-critical{border-left-color:#dd6767;}
+.sana-shell .pm-card-top{display:flex;align-items:center;justify-content:space-between;gap:5px;color:#aaa;}
+.sana-shell .pm-card-client{font-size:9.5px;color:#777;font-weight:600;display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sana-shell .pm-client-pip{flex:none;width:8px;height:8px;border-radius:3px;}
+.sana-shell .pm-board-card>strong{font-size:12px;line-height:1.35;letter-spacing:-.2px;font-weight:670;}
+.sana-shell .pm-card-description{font-size:10.5px;color:#929197;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.sana-shell .pm-card-bottom{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:5px;}
+.sana-shell .pm-card-bottom>span:last-child{font-size:9.5px;color:#a3a1a4;}
+.sana-shell .pm-card-due{display:flex;align-items:center;gap:5px;font-size:9px;color:#9f8f83;}
+.sana-shell .pm-demo-tag{font-size:8px;letter-spacing:.06em;color:#b1a1a1;font-weight:650;}
+.sana-shell .pm-stage,.sana-shell .pm-heat{display:inline-flex;align-items:center;justify-content:center;gap:5px;border-radius:7px;padding:5px 7px;background:#f1f1f2;color:#76757b;font-size:10px;font-weight:650;white-space:nowrap;width:max-content;max-width:100%;}
+.sana-shell .pm-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;}
+.sana-shell .pm-stage-idea{background:#f0f0f0;color:#89888b;}
+.sana-shell .pm-stage-planning{background:#efebfa;color:#8464b3;}
+.sana-shell .pm-stage-active{background:#e2f4ea;color:#368a64;}
+.sana-shell .pm-stage-waiting{background:#fff1dc;color:#bd8130;}
+.sana-shell .pm-stage-completed{background:#e6edef;color:#60838e;}
+.sana-shell .pm-heat-low{background:#e7f0fa;color:#497ca7;}
+.sana-shell .pm-heat-normal{background:#f0f0f0;color:#797980;}
+.sana-shell .pm-heat-high{background:#fff0da;color:#af711e;}
+.sana-shell .pm-heat-critical{background:#fee8e7;color:#bc4949;}
+.sana-shell .pm-column-empty{min-height:120px;border:1px dashed #e3e1e0;border-radius:9px;color:#b0afb2;display:grid;place-items:center;text-align:center;padding:12px;font-size:10px;}
+.sana-shell .pm-board-hint{font-size:10px;color:#9f9ea2;padding:10px 2px 0;display:flex;gap:6px;align-items:center;}
+.sana-shell .pm-list{background:#fff;border:1px solid #ebe9e9;border-radius:13px;overflow:hidden;}
+.sana-shell .pm-list-head,.sana-shell .pm-list-item{display:grid;grid-template-columns:minmax(0,2fr) 110px 100px minmax(100px,1fr);align-items:center;gap:12px;padding:12px 17px;}
+.sana-shell .pm-list-head{background:#f9f9f8;color:#b1afb3;font-size:10px;letter-spacing:.02em;}
+.sana-shell .pm-list-item{width:100%;background:#fff;border:0;border-top:1px solid #f0eeee;min-height:69px;text-align:left;color:#777;font-size:11px;}
+.sana-shell .pm-list-item:hover{background:#fafaf9;}
+.sana-shell .pm-list-item>div{display:grid;gap:4px;min-width:0;}
+.sana-shell .pm-list-item strong{font-size:12px;color:#2b2b2f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sana-shell .pm-list-item small{font-size:10px;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sana-shell .pm-clients{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+.sana-shell .pm-directory-client{position:relative;min-width:0;background:#fff;border:1px solid #ebebea;border-radius:13px;padding:21px;overflow:hidden;}
+.sana-shell .pm-directory-accent{position:absolute;top:0;left:0;right:0;height:5px;}
+.sana-shell .pm-directory-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+.sana-shell .pm-client-emblem{height:41px;width:41px;display:grid;place-items:center;color:white;border-radius:11px;font-size:12px;font-weight:750;}
+.sana-shell .pm-directory-head>button{display:flex;align-items:center;gap:4px;background:transparent;border:0;color:#929098;font-size:11px;}
+.sana-shell .pm-directory-client h2{font-size:17px;letter-spacing:-.4px;margin:0 0 4px;}
+.sana-shell .pm-directory-client>span{font-size:10px;color:#888;}
+.sana-shell .pm-directory-client>p{min-height:48px;color:#8a888d;line-height:1.5;font-size:11px;margin:16px 0 21px;}
+.sana-shell .pm-directory-bottom{display:flex;align-items:baseline;gap:8px;border-top:1px solid #eeeeed;padding-top:14px;}
+.sana-shell .pm-directory-bottom strong{font-size:21px;font-weight:680;}
+.sana-shell .pm-directory-bottom>span{font-size:10.5px;color:#929096;}
+.sana-shell .pm-empty{padding:35px 20px;background:#fff;border:1px dashed #e2e1e1;border-radius:13px;text-align:center;font-size:12px;color:#96949a;}
+.sana-shell .pm-footer-note{font-size:10.5px;line-height:1.6;color:#a6a4a7;margin:0;}
+.sana-shell .pm-page-breadcrumb{display:flex;align-items:center;gap:10px;color:#a5a3a6;font-size:11px;}
+.sana-shell .pm-page-breadcrumb button{border:0;padding:0;background:transparent;color:#87848c;}
+.sana-shell .pm-page-breadcrumb strong{color:#67656b;font-weight:600;}
+.sana-shell .pm-project-page{display:grid;gap:19px;}
+.sana-shell .pm-client-banner{background:#fff;border:1px solid #e8e7e7;border-top:5px solid #d3d3df;border-radius:15px;padding:22px 25px 24px;}
+.sana-shell .pm-banner-actions{display:flex;align-items:center;justify-content:space-between;margin:0 0 28px;gap:12px;}
+.sana-shell .pm-back{border:0;background:transparent;color:#76737c;display:flex;align-items:center;gap:8px;font-size:11px;padding:0;}
+.sana-shell .pm-private-tag{font-size:10px;color:#aba8ad;}
+.sana-shell .pm-project-heading{display:flex;align-items:flex-start;gap:16px;}
+.sana-shell .pm-project-logo{width:52px;height:52px;border-radius:13px;display:grid;place-items:center;font-weight:750;letter-spacing:-.5px;font-size:15px;flex:none;}
+.sana-shell .pm-project-heading h1{font-size:26px;letter-spacing:-.85px;margin:6px 0 7px;line-height:1.2;font-weight:680;}
+.sana-shell .pm-project-heading p{font-size:12px;color:#979399;margin:0;line-height:1.5;}
+.sana-shell .pm-project-controls{display:flex;align-items:center;flex-wrap:wrap;gap:13px;margin-top:25px;padding-top:18px;border-top:1px solid #eeeeed;}
+.sana-shell .pm-project-controls label{display:flex;align-items:center;gap:9px;color:#929097;font-size:11px;}
+.sana-shell .pm-project-controls select,.sana-shell .pm-project-controls input{padding:9px;border:1px solid #e7e7e7;background:#fff;color:#454248;border-radius:8px;font-size:11px;}
+.sana-shell .pm-project-controls .pm-heat-high{background:#fff0da;color:#af711e;}
+.sana-shell .pm-project-controls .pm-heat-critical{background:#fee8e7;color:#bc4949;}
+.sana-shell .pm-project-controls .pm-heat-low{background:#e7f0fa;color:#497ca7;}
+.sana-shell .pm-project-controls .pm-heat-normal{background:#f1f1f1;color:#777;}
+.sana-shell .pm-project-controls .pm-stage-planning{background:#efebfa;color:#8464b3;}
+.sana-shell .pm-project-controls .pm-stage-active{background:#e2f4ea;color:#368a64;}
+.sana-shell .pm-project-controls .pm-stage-waiting{background:#fff1dc;color:#bd8130;}
+.sana-shell .pm-project-columns{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(285px,1fr);gap:18px;align-items:start;}
+.sana-shell .pm-project-primary,.sana-shell .pm-project-aside{display:grid;gap:17px;min-width:0;}
+.sana-shell .pm-section{background:#fff;border:1px solid #ebebea;border-radius:13px;padding:21px;min-width:0;}
+.sana-shell .pm-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 19px;}
+.sana-shell .pm-section-heading h2{font-size:14px;letter-spacing:-.2px;margin:0;font-weight:670;}
+.sana-shell .pm-section-heading span{font-size:10px;color:#aaa;}
+.sana-shell .pm-field-label{display:block;margin:0 0 8px;color:#8f8b93;font-size:10.5px;font-weight:580;}
+.sana-shell .pm-section textarea,.sana-shell .pm-crm-card select{display:block;width:100%;border:1px solid #e7e6e6;border-radius:9px;padding:11px 13px;background:#fbfbfa;color:#3a393e;font:inherit;font-size:12px;line-height:1.6;resize:vertical;outline:none;}
+.sana-shell .pm-crm-card select{font-size:11px;line-height:1.2;min-height:39px;}
+.sana-shell .pm-section textarea:focus,.sana-shell .pm-crm-card select:focus{border-color:#9995ad;background:#fff;}
+.sana-shell .pm-edit-actions{display:flex;justify-content:flex-end;margin-top:11px;}
+.sana-shell .pm-edit-actions button,.sana-shell .pm-task-entry button{border:0;border-radius:8px;padding:9px 11px;background:#28272b;color:white;font-size:10.5px;font-weight:600;}
+.sana-shell .pm-edit-actions button:disabled,.sana-shell .pm-task-entry button:disabled{opacity:.33;cursor:not-allowed;}
+.sana-shell .pm-task-progress{height:5px;background:#f0f0f0;overflow:hidden;border-radius:10px;margin:0 0 13px;}
+.sana-shell .pm-task-progress>span{display:block;height:100%;background:#81b99c;border-radius:10px;transition:width .2s ease;}
+.sana-shell .pm-task-list{display:grid;}
+.sana-shell .pm-task{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid #f0efef;min-height:45px;}
+.sana-shell .pm-task>button{background:transparent;border:0;color:#a7a5a8;padding:0;display:grid;place-items:center;flex:none;}
+.sana-shell .pm-task>button:has(.lucide-circle-check-big){color:#559e77;}
+.sana-shell .pm-task>span{font-size:11.5px;flex:1;min-width:0;}
+.sana-shell .pm-task>span.pm-task-done{color:#aca9ad;text-decoration:line-through;}
+.sana-shell .pm-task>button.pm-delete{opacity:.55;}
+.sana-shell .pm-task>button.pm-delete:hover{color:#c84f56;opacity:1;}
+.sana-shell .pm-task-entry{display:flex;align-items:center;gap:9px;margin-top:15px;}
+.sana-shell .pm-task-entry input{min-width:0;flex:1;border:1px solid #e6e4e5;border-radius:9px;background:#fafaf9;padding:10px 12px;font-size:11px;color:#333;}
+.sana-shell .pm-task-entry button{display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.sana-shell .pm-placeholder{font-size:11px;color:#a1a0a4;line-height:1.6;margin:5px 0 16px;}
+.sana-shell .pm-client-profile{margin:19px 0;}
+.sana-shell .pm-client-identity{display:flex;align-items:center;gap:10px;}
+.sana-shell .pm-client-emblem{flex:none;}
+.sana-shell .pm-client-identity>div{display:grid;gap:4px;}
+.sana-shell .pm-client-identity strong{font-size:13px;}
+.sana-shell .pm-client-identity small{font-size:10px;color:#aaa;}
+.sana-shell .pm-client-profile>p{font-size:11px;line-height:1.65;color:#858289;margin:14px 0 17px;}
+.sana-shell .pm-contact-field{display:flex;align-items:center;gap:8px;color:#78757d;font-size:11px;line-height:1.6;overflow-wrap:anywhere;padding:5px 0;}
+.sana-shell .pm-contact-field a{color:#535c8c;}
+.sana-shell .pm-client-website{display:flex;align-items:center;gap:5px;font-size:11px;color:#636d98;margin:11px 0;}
+.sana-shell .pm-outline-action{display:flex;align-items:center;gap:6px;background:transparent;border:1px solid #e8e7e7;border-radius:8px;color:#57535b;font-size:10.5px;padding:9px 11px;margin-top:15px;width:100%;justify-content:space-between;}
+.sana-shell .pm-outline-action:hover{background:#f7f7f6;}
+.sana-shell .pm-add-client{display:flex;align-items:center;gap:6px;margin-top:10px;padding:8px 0;background:transparent;border:0;font-size:10.5px;color:#6e6874;}
+.sana-shell .pm-mission-item{display:flex;gap:9px;align-items:flex-start;padding:11px 0;border-bottom:1px solid #f0efef;}
+.sana-shell .pm-mission-pip{width:8px;height:8px;margin-top:4px;border-radius:3px;background:#aca0cf;flex:none;}
+.sana-shell .pm-mission-item>div{display:grid;gap:5px;}
+.sana-shell .pm-mission-item strong{font-weight:600;font-size:11px;line-height:1.4;}
+.sana-shell .pm-mission-item small{color:#a09da3;font-size:10px;}
+.sana-shell .pm-local-disclaimer{display:flex;align-items:flex-start;gap:9px;padding:13px;color:#9b969e;font-size:10px;line-height:1.55;}
+.sana-shell .pm-local-disclaimer p{margin:0;}
+.sana-shell .pm-dialog-overlay{position:fixed;inset:0;background:#16161985;display:grid;place-items:center;z-index:300;padding:16px;overflow-y:auto;}
+.sana-shell .pm-dialog{width:min(100%,590px);max-height:calc(100vh - 48px);overflow-y:auto;display:grid;gap:14px;background:#fff;border:1px solid #e8e8e8;border-radius:17px;padding:27px;box-shadow:0 20px 80px #0003;color:#2f2c31;}
+.sana-shell .pm-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:4px;}
+.sana-shell .pm-dialog-head span{color:#a3a0aa;font-size:10px;letter-spacing:.09em;font-weight:650;}
+.sana-shell .pm-dialog-head h2{font-size:23px;margin:5px 0 5px;letter-spacing:-.6px;}
+.sana-shell .pm-dialog-head p{font-size:11px;color:#aaa;margin:0;}
+.sana-shell .pm-dialog-head button{padding:7px;background:#f6f5f5;border:0;border-radius:9px;color:#777;}
+.sana-shell .pm-dialog>label,.sana-shell .pm-form-grid>label{display:grid;gap:7px;font-size:10.5px;color:#7b777e;font-weight:580;}
+.sana-shell .pm-dialog input:not([type=color]),.sana-shell .pm-dialog textarea{width:100%;border:1px solid #e5e3e5;border-radius:9px;padding:10px 12px;background:#fbfbfa;color:#29292d;font-size:12px;resize:vertical;}
+.sana-shell .pm-dialog input[type=color]{width:100%;height:40px;border:1px solid #e6e4e5;border-radius:9px;padding:4px;background:#fff;}
+.sana-shell .pm-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;}
+.sana-shell .pm-form-notice{font-size:10px;line-height:1.5;color:#a39fa6;background:#f8f7f7;border-radius:9px;margin:1px 0;padding:11px 13px;}
+.sana-shell .pm-form-buttons{display:flex;justify-content:flex-end;gap:9px;}
+.sana-shell .pm-form-buttons button{padding:10px 14px;border:1px solid #e5e3e3;background:#fff;border-radius:9px;color:#4e4a50;font-size:11px;}
+.sana-shell .pm-form-buttons button[type=submit]{display:flex;align-items:center;gap:6px;background:#28272c;color:#fff;border-color:#28272c;}
+
+/* Dark theme */
+.sana-shell.theme-dark .pm-shell{color:#f4f3f5;}
+.sana-shell.theme-dark .pm-titlebar p,.sana-shell.theme-dark .pm-eyebrow,.sana-shell.theme-dark .pm-board-hint,.sana-shell.theme-dark .pm-footer-note{color:#a5a2a9;}
+.sana-shell.theme-dark .pm-metrics,.sana-shell.theme-dark .pm-directory-client,.sana-shell.theme-dark .pm-list,.sana-shell.theme-dark .pm-list-item,.sana-shell.theme-dark .pm-client-banner,.sana-shell.theme-dark .pm-section{background:#242426;border-color:#39393c;color:#e7e7e9;}
+.sana-shell.theme-dark .pm-metrics>div,.sana-shell.theme-dark .pm-task,.sana-shell.theme-dark .pm-project-controls,.sana-shell.theme-dark .pm-directory-bottom,.sana-shell.theme-dark .pm-list-item{border-color:#3a3a3c;}
+.sana-shell.theme-dark .pm-view-options,.sana-shell.theme-dark .pm-column,.sana-shell.theme-dark .pm-search,.sana-shell.theme-dark .pm-filter{background:#262628;border-color:#39393c;color:#ddd;}
+.sana-shell.theme-dark .pm-view-options button.active{background:#414145;color:#fff;}
+.sana-shell.theme-dark .pm-column-count{background:#39393c;color:#ddd;}
+.sana-shell.theme-dark .pm-board-card{background:#303034;border-color:#48484c;color:#f1f1f1;}
+.sana-shell.theme-dark .pm-list-item strong,.sana-shell.theme-dark .pm-project-heading h1,.sana-shell.theme-dark .pm-directory-client h2{color:#f4f4f4;}
+.sana-shell.theme-dark .pm-list-head{background:#303034;}
+.sana-shell.theme-dark .pm-column-empty{border-color:#4a4a4c;}
+.sana-shell.theme-dark .pm-crm-card select,.sana-shell.theme-dark .pm-section textarea,.sana-shell.theme-dark .pm-task-entry input,.sana-shell.theme-dark .pm-project-controls select,.sana-shell.theme-dark .pm-project-controls input,.sana-shell.theme-dark .pm-search input,.sana-shell.theme-dark .pm-filter select{background:#303034;border-color:#47474a;color:#f1f1f1;}
+.sana-shell.theme-dark .pm-client-profile>p,.sana-shell.theme-dark .pm-contact-field{color:#c4c1c7;}
+.sana-shell.theme-dark .pm-dialog{background:#262628;border-color:#454548;color:#f5f4f5;}
+.sana-shell.theme-dark .pm-dialog input:not([type=color]),.sana-shell.theme-dark .pm-dialog textarea{background:#303034;color:#eee;border-color:#49494d;}
+.sana-shell.theme-dark .pm-form-notice{background:#39393c;color:#bbb;}
+.sana-shell.theme-dark .pm-outline-action,.sana-shell.theme-dark .pm-form-buttons button:not([type=submit]){background:#333337;color:#eee;border-color:#48484c;}
+@media(max-width:1350px){.sana-shell .pm-kanban{grid-template-columns:repeat(5,180px);}.sana-shell .pm-project-columns{grid-template-columns:minmax(0,1.35fr) minmax(255px,1fr);}}
+@media(max-width:950px){.sana-shell .pm-toolbar{flex-wrap:wrap;}.sana-shell .pm-filters{width:100%;}.sana-shell .pm-search{flex:1;}.sana-shell .pm-search input{width:100%;}.sana-shell .pm-clients{grid-template-columns:repeat(2,minmax(0,1fr));}.sana-shell .pm-project-columns{grid-template-columns:1fr;}}
+@media(max-width:650px){.sana-shell .pm-titlebar{align-items:flex-start;flex-direction:column;}.sana-shell .pm-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}.sana-shell .pm-metrics>div:nth-child(2){border-right:0;}.sana-shell .pm-metrics>div:nth-child(-n+2){border-bottom:1px solid #eee;}.sana-shell .pm-view-options{width:100%;}.sana-shell .pm-view-options button{flex:1;justify-content:center;}.sana-shell .pm-filters{flex-wrap:wrap;}.sana-shell .pm-filters>*{flex:1;}.sana-shell .pm-clients{grid-template-columns:1fr;}.sana-shell .pm-list-head{display:none;}.sana-shell .pm-list-item{grid-template-columns:1fr 1fr;gap:9px;}.sana-shell .pm-list-item>div{grid-column:1/-1;}.sana-shell .pm-kanban{grid-template-columns:repeat(5,210px);}.sana-shell .pm-client-banner{padding:17px;}.sana-shell .pm-project-heading{gap:11px;}.sana-shell .pm-project-heading h1{font-size:22px;}.sana-shell .pm-project-logo{width:44px;height:44px;}.sana-shell .pm-project-controls{align-items:stretch;gap:10px;}.sana-shell .pm-project-controls label{flex:1;min-width:140px;flex-direction:column;align-items:flex-start;}.sana-shell .pm-project-controls label>*{width:100%;}.sana-shell .pm-section{padding:16px;}.sana-shell .pm-form-grid{grid-template-columns:1fr;}.sana-shell .pm-dialog{padding:20px;}}
