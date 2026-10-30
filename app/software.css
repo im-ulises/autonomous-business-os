@@ -1,0 +1,206 @@
+
+/* EVO Studios — independent software delivery workspace.
+   Calm composition, compact project states, deep editable phase tracking. */
+.sana-shell .sw-root{min-width:0;display:flex;flex-direction:column;gap:21px;color:#28272d;}
+.sana-shell .sw-overline{display:block;font-size:10px;letter-spacing:.075em;color:#99939e;font-weight:710;}
+.sana-shell .sw-portfolio-header{display:flex;justify-content:space-between;align-items:flex-end;gap:22px;}
+.sana-shell .sw-portfolio-header h1{margin:7px 0 8px;font-size:32px;line-height:1.13;letter-spacing:-1.05px;font-weight:680;}
+.sana-shell .sw-portfolio-header p{max-width:670px;font-size:12px;line-height:1.6;color:#939096;margin:0;}
+.sana-shell .sw-action{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;background:#28272c;color:#fff;border:1px solid #28272c;border-radius:10px;padding:11px 14px;font-size:11px;font-weight:650;min-height:39px;cursor:pointer;}
+.sana-shell .sw-action:hover{background:#47434f;}
+.sana-shell .sw-action:disabled{opacity:.4;cursor:default;}
+.sana-shell .sw-outline{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;background:#fff;color:#615d66;border:1px solid #e7e5e8;border-radius:9px;padding:9px 12px;font-size:10.5px;font-weight:600;min-height:36px;}
+.sana-shell .sw-outline:hover{background:#f7f6f8;}
+.sana-shell .sw-summary-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:#fff;border:1px solid #ebe9ec;border-radius:14px;overflow:hidden;}
+.sana-shell .sw-summary-metrics>div{display:flex;flex-direction:column;gap:8px;padding:19px 21px;border-right:1px solid #eeedef;min-width:0;}
+.sana-shell .sw-summary-metrics>div:last-child{border:0;}
+.sana-shell .sw-summary-metrics>div>span{font-size:11px;color:#96939b;}
+.sana-shell .sw-summary-metrics strong{font-size:27px;font-weight:690;letter-spacing:-1px;line-height:1;}
+.sana-shell .sw-summary-metrics em{font-style:normal;font-size:14px;font-weight:500;letter-spacing:0;color:#a6a2a9;}
+.sana-shell .sw-summary-metrics small{font-size:10px;color:#aaa6ae;line-height:1.4;}
+.sana-shell .sw-portfolio-toolbar{display:flex;align-items:center;justify-content:space-between;gap:15px;}
+.sana-shell .sw-portfolio-toolbar h2{font-size:16px;letter-spacing:-.25px;margin:0 0 5px;font-weight:670;}
+.sana-shell .sw-portfolio-toolbar p{margin:0;font-size:11px;color:#aaa6ad;}
+.sana-shell .sw-portfolio-filters{display:flex;align-items:center;gap:9px;}
+.sana-shell .sw-search{display:flex;align-items:center;gap:8px;padding:0 10px;background:#fff;border:1px solid #e8e6e8;border-radius:9px;color:#a3a0a5;min-height:37px;}
+.sana-shell .sw-search input{border:0;outline:0;background:transparent;color:#39353f;font-size:11px;min-width:145px;width:170px;}
+.sana-shell .sw-portfolio-filters select{border:1px solid #e8e6e8;border-radius:9px;background:#fff;padding:10px;color:#77727b;font-size:11px;min-height:37px;max-width:170px;}
+.sana-shell .sw-portfolio-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;align-items:start;}
+.sana-shell .sw-project-card{display:flex;flex-direction:column;gap:12px;min-width:0;border:1px solid #eae8eb;border-radius:15px;padding:21px 22px 16px;text-align:left;background:#fff;color:#302d32;transition:border-color 130ms ease,box-shadow 130ms ease;}
+.sana-shell .sw-project-card:hover{border-color:#cfc9da;box-shadow:0 3px 12px #1412180b;}
+.sana-shell .sw-project-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.sana-shell .sw-project-symbol{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#efeaf7;color:#7665a0;}
+.sana-shell .sw-project-client{font-size:10px;color:#9b95a1;font-weight:580;}
+.sana-shell .sw-project-card h3{font-size:19px;line-height:1.22;letter-spacing:-.45px;margin:-3px 0 0;font-weight:670;}
+.sana-shell .sw-project-card>p{font-size:11.5px;color:#918c94;margin:-4px 0 9px;min-height:33px;line-height:1.5;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;}
+.sana-shell .sw-state,.sana-shell .sw-phase-pill{display:inline-flex;align-items:center;gap:6px;width:max-content;max-width:100%;white-space:nowrap;padding:7px 9px;border-radius:8px;font-size:10px;font-weight:650;line-height:1.15;}
+.sana-shell .sw-dot{width:6px;height:6px;flex:none;border-radius:50%;background:currentColor;}
+.sana-shell .sw-state-planning,.sana-shell .sw-phase-pending{background:#f0edf6;color:#7b6e98;}
+.sana-shell .sw-state-building,.sana-shell .sw-phase-active{background:#e7f3ed;color:#438563;}
+.sana-shell .sw-state-at_risk,.sana-shell .sw-phase-blocked{background:#fde9e7;color:#bb5c57;}
+.sana-shell .sw-state-paused{background:#fff3df;color:#b98a40;}
+.sana-shell .sw-state-delivered,.sana-shell .sw-phase-done{background:#e6f0f3;color:#5a8690;}
+.sana-shell .sw-phase-review{background:#eaf0fa;color:#647da6;}
+.sana-shell .sw-progress-track{height:6px;border-radius:9px;background:#f0edef;overflow:hidden;}
+.sana-shell .sw-progress-track>div{height:100%;background:#8e80ad;border-radius:9px;transition:width 150ms ease;}
+.sana-shell .sw-project-card-progress{display:grid;gap:9px;}
+.sana-shell .sw-project-card-progress>div:first-child{display:flex;justify-content:space-between;align-items:center;}
+.sana-shell .sw-project-card-progress span{font-size:10px;color:#98939d;}
+.sana-shell .sw-project-card-progress strong{font-size:12px;font-weight:670;}
+.sana-shell .sw-project-card-phase{display:flex;align-items:center;gap:7px;color:#9a84a7;font-size:10.5px;min-width:0;padding:11px 0;border-bottom:1px solid #f0edef;}
+.sana-shell .sw-project-card-phase span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sana-shell .sw-project-card-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:10px;color:#a6a2a9;}
+.sana-shell .sw-project-card-footer>span,.sana-shell .sw-project-card-footer>strong{display:inline-flex;align-items:center;gap:6px;min-width:0;}
+.sana-shell .sw-project-card-footer strong{color:#61566f;font-weight:650;white-space:nowrap;}
+.sana-shell .sw-empty,.sana-shell .sw-filter-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:57px 22px;background:#fff;border:1px dashed #e3e0e6;border-radius:15px;}
+.sana-shell .sw-empty-symbol{height:63px;width:63px;display:grid;place-items:center;border-radius:16px;background:#f2eef8;color:#8270a8;}
+.sana-shell .sw-empty h2,.sana-shell .sw-filter-empty h3{margin:0;font-size:19px;letter-spacing:-.45px;font-weight:650;}
+.sana-shell .sw-empty>p,.sana-shell .sw-filter-empty>p{max-width:515px;font-size:12px;color:#98929c;line-height:1.65;margin:0;}
+.sana-shell .sw-empty>button,.sana-shell .sw-filter-empty button{display:flex;align-items:center;gap:7px;margin-top:8px;border:0;border-radius:9px;background:#28272c;color:white;font-size:11px;padding:11px 14px;}
+.sana-shell .sw-next-project{display:flex;align-items:flex-start;gap:10px;max-width:580px;padding:15px;background:#f8f5fa;border:1px solid #efeaf3;border-radius:11px;color:#86769d;text-align:left;margin:8px 0;}
+.sana-shell .sw-next-project>svg{flex:none;margin-top:2px;}
+.sana-shell .sw-next-project>span{display:grid;gap:6px;}
+.sana-shell .sw-next-project strong{font-size:11px;color:#625472;font-weight:660;}
+.sana-shell .sw-next-project small{font-size:10px;color:#9e96a7;line-height:1.6;}
+.sana-shell .sw-footnote{margin:0;font-size:10.5px;color:#aaa5ac;line-height:1.5;}
+.sana-shell .sw-create-panel{display:grid;gap:20px;padding:22px;background:#fff;border:1px solid #e8e4ed;border-radius:14px;}
+.sana-shell .sw-create-heading h2{font-size:17px;letter-spacing:-.35px;margin:0 0 6px;}
+.sana-shell .sw-create-heading p{color:#97929b;font-size:11px;line-height:1.55;margin:0;}
+.sana-shell .sw-create-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 15px;}
+.sana-shell .sw-field{display:grid;gap:7px;font-size:11px;font-weight:600;color:#928d96;min-width:0;margin-bottom:14px;}
+.sana-shell .sw-create-grid .sw-field{margin:0;}
+.sana-shell .sw-field>span{font-size:10.5px;font-weight:620;}
+.sana-shell .sw-field>input,.sana-shell .sw-field>select,.sana-shell .sw-field>textarea{border:1px solid #e6e3e7;border-radius:9px;background:#fbfafb;min-width:0;max-width:100%;width:100%;padding:10px 11px;color:#3d3842;font-size:11.5px;font-family:inherit;outline:none;resize:vertical;line-height:1.5;}
+.sana-shell .sw-field>input:focus,.sana-shell .sw-field>select:focus,.sana-shell .sw-field>textarea:focus{border-color:#9b8cae;background:#fff;}
+.sana-shell .sw-template-choice{display:flex;align-items:flex-start;gap:11px;background:#f8f6fa;padding:14px 15px;border-radius:10px;cursor:pointer;}
+.sana-shell .sw-template-choice input{accent-color:#7d6b9a;margin-top:3px;}
+.sana-shell .sw-template-choice>span{display:grid;gap:6px;}
+.sana-shell .sw-template-choice strong{font-size:11px;}
+.sana-shell .sw-template-choice small{font-size:10px;line-height:1.5;color:#9c95a2;}
+.sana-shell .sw-form-actions{display:flex;justify-content:flex-end;gap:9px;}
+.sana-shell .sw-breadcrumb{display:flex;align-items:center;gap:10px;font-size:11px;color:#aaa6ae;}
+.sana-shell .sw-breadcrumb>button{background:transparent;border:0;color:#918995;padding:0;font-size:11px;}
+.sana-shell .sw-breadcrumb>strong{color:#5b5561;font-weight:620;}
+.sana-shell .sw-detail-hero{border:1px solid #ebe9ec;background:#fff;border-radius:15px;padding:23px 24px 24px;}
+.sana-shell .sw-detail-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:25px;}
+.sana-shell .sw-back{display:flex;align-items:center;gap:8px;border:0;background:transparent;color:#8b8590;font-size:11px;padding:0;}
+.sana-shell .sw-local-tag{font-size:10px;color:#b0abb2;}
+.sana-shell .sw-detail-heading{display:flex;align-items:flex-start;gap:15px;margin-bottom:23px;}
+.sana-shell .sw-product-mark{height:53px;width:53px;border-radius:14px;display:grid;place-items:center;background:#ede8f4;color:#79669f;flex:none;}
+.sana-shell .sw-detail-heading>div:last-child{min-width:0;}
+.sana-shell .sw-detail-heading span{font-size:9.5px;letter-spacing:.07em;color:#a29ba7;font-weight:650;}
+.sana-shell .sw-detail-heading h1{margin:6px 0 7px;font-size:26px;letter-spacing:-.7px;font-weight:680;line-height:1.2;}
+.sana-shell .sw-detail-heading p{margin:0;font-size:11.5px;color:#969098;line-height:1.5;}
+.sana-shell .sw-detail-metrics{display:grid;grid-template-columns:1fr 1fr 1fr 1.7fr;gap:12px;margin-bottom:17px;}
+.sana-shell .sw-detail-metrics>div{display:grid;gap:5px;min-width:0;}
+.sana-shell .sw-detail-metrics strong{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.25px;font-weight:660;}
+.sana-shell .sw-detail-metrics span{font-size:10px;color:#aaa5ae;}
+.sana-shell .sw-detail-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(275px,1fr);gap:17px;align-items:start;}
+.sana-shell .sw-detail-main,.sana-shell .sw-detail-side{display:grid;gap:17px;min-width:0;}
+.sana-shell .sw-panel{background:#fff;border:1px solid #ebe9eb;border-radius:14px;padding:21px;min-width:0;}
+.sana-shell .sw-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:21px;}
+.sana-shell .sw-panel-head h2{font-size:16px;letter-spacing:-.25px;margin:5px 0;line-height:1.25;font-weight:670;}
+.sana-shell .sw-panel-head p{font-size:10.5px;color:#a49ea8;line-height:1.55;margin:0;}
+.sana-shell .sw-phase-list{display:grid;gap:10px;}
+.sana-shell .sw-phase-card{background:#fff;border:1px solid #eae8eb;border-radius:11px;overflow:hidden;}
+.sana-shell .sw-phase-card.is-open{border-color:#d6d0e0;}
+.sana-shell .sw-phase-card-top{display:flex;align-items:center;gap:12px;min-height:70px;padding:12px;}
+.sana-shell .sw-phase-number{flex:none;height:37px;width:37px;display:grid;place-items:center;border-radius:10px;font-size:11px;font-weight:720;color:#8b8590;background:#f2f1f3;}
+.sana-shell .sw-phase-number-active{background:#e7f3ed;color:#438563;}
+.sana-shell .sw-phase-number-review{background:#eaf0fa;color:#647da6;}
+.sana-shell .sw-phase-number-blocked{background:#fde9e7;color:#bb5c57;}
+.sana-shell .sw-phase-number-done{background:#e6f0f3;color:#5a8690;}
+.sana-shell .sw-phase-trigger{min-width:0;flex:1;display:flex;flex-direction:column;gap:6px;align-items:flex-start;background:transparent;border:0;text-align:left;color:#2d2a32;padding:0;}
+.sana-shell .sw-phase-trigger-title{font-size:12px;font-weight:670;line-height:1.25;}
+.sana-shell .sw-phase-trigger small{color:#aaa5ae;font-size:10px;}
+.sana-shell .sw-icon-button{display:grid;place-items:center;border:0;background:#f5f4f5;color:#99929e;border-radius:8px;height:30px;width:30px;flex:none;}
+.sana-shell .sw-phase-content{padding:16px 17px 18px;border-top:1px solid #f0edef;background:#fcfbfc;display:grid;gap:4px;}
+.sana-shell .sw-phase-edit-row{display:grid;grid-template-columns:1.4fr 1fr;gap:13px;}
+.sana-shell .sw-phase-select{font-size:11px;}
+.sana-shell .sw-milestone-heading{display:flex;align-items:center;justify-content:space-between;margin:6px 0 8px;gap:10px;}
+.sana-shell .sw-milestone-heading h3{font-size:12px;margin:0;font-weight:670;}
+.sana-shell .sw-milestone-heading>span{font-size:10px;color:#aaa5ae;}
+.sana-shell .sw-milestone-list{display:grid;gap:0;}
+.sana-shell .sw-milestone{display:flex;align-items:flex-start;gap:9px;padding:11px 0;border-top:1px solid #ebe9ed;}
+.sana-shell .sw-milestone>button:first-child{border:0;background:transparent;color:#8e82a6;padding:4px 0;flex:none;}
+.sana-shell .sw-milestone-fields{min-width:0;display:grid;gap:7px;flex:1;}
+.sana-shell .sw-milestone-fields input{width:100%;min-width:0;background:transparent;border:0;border-bottom:1px solid transparent;padding:3px 2px;color:#3c3743;outline:0;font-family:inherit;font-size:11px;}
+.sana-shell .sw-milestone-fields input:first-child{font-weight:630;}
+.sana-shell .sw-milestone-fields input:last-child{font-size:10px;color:#9f99a3;}
+.sana-shell .sw-milestone-fields input:focus{border-color:#aaa0b8;}
+.sana-shell .sw-milestone-fields input.is-complete{text-decoration:line-through;color:#aaa6ac;}
+.sana-shell .sw-milestone-remove{flex:none;color:#c1b9c3;border:0;background:transparent;margin-top:3px;padding:4px;}
+.sana-shell .sw-milestone-remove:hover,.sana-shell .sw-danger-action:hover{color:#c85b61;}
+.sana-shell .sw-milestone-add{display:flex;align-items:center;gap:8px;margin:9px 0 13px;}
+.sana-shell .sw-milestone-add input{min-width:0;flex:1;border:1px solid #e8e5e9;border-radius:8px;padding:10px;background:#fff;font-size:11px;color:#3b3740;}
+.sana-shell .sw-milestone-add button{display:inline-flex;align-items:center;gap:5px;background:#f0edf5;border:0;border-radius:8px;padding:9px 12px;color:#716383;font-size:10px;white-space:nowrap;}
+.sana-shell .sw-milestone-add button:disabled{opacity:.45;}
+.sana-shell .sw-phase-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;border-top:1px solid #ece9ed;padding-top:12px;}
+.sana-shell .sw-phase-actions button{display:flex;align-items:center;gap:5px;background:transparent;border:0;color:#89818e;font-size:10px;padding:3px 0;}
+.sana-shell .sw-phase-actions button:disabled{opacity:.35;}
+.sana-shell .sw-phase-actions button.sw-danger-action{color:#c77e80;margin-left:auto;}
+.sana-shell .sw-no-phases{display:flex;align-items:center;flex-direction:column;text-align:center;gap:10px;padding:34px 20px;background:#faf8fb;border:1px dashed #e7e1e9;border-radius:11px;color:#8b7e98;}
+.sana-shell .sw-no-phases h3{font-size:13px;margin:0;color:#5d5366;}
+.sana-shell .sw-no-phases p{max-width:430px;font-size:11px;color:#9b94a1;line-height:1.55;margin:0;}
+.sana-shell .sw-no-phases button{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border:0;border-radius:9px;background:#ece7f2;color:#766589;font-size:10.5px;}
+.sana-shell .sw-add-phase-form{display:grid;gap:8px;background:#f9f7fa;border:1px solid #ebe5ef;border-radius:11px;padding:15px;margin-top:11px;}
+.sana-shell .sw-add-phase-form>div{display:flex;justify-content:flex-end;gap:8px;}
+.sana-shell .sw-side-dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+.sana-shell .sw-client-preview{display:flex;align-items:center;gap:10px;padding:10px;background:#f8f7f8;border-radius:10px;margin:-2px 0 12px;}
+.sana-shell .sw-client-preview>span{height:31px;width:31px;border-radius:9px;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:700;}
+.sana-shell .sw-client-preview>div{display:grid;gap:3px;}
+.sana-shell .sw-client-preview strong{font-size:10.5px;}
+.sana-shell .sw-client-preview small{font-size:10px;color:#aaa3ae;}
+.sana-shell .sw-resource-link{display:inline-flex;align-items:center;gap:7px;margin:-6px 0 12px;color:#76658f;font-size:10.5px;}
+.sana-shell .sw-local-notice{display:flex;align-items:flex-start;gap:9px;color:#aaa3ae;font-size:10px;line-height:1.55;margin:0;padding:6px 2px;}
+.sana-shell .sw-local-notice svg{flex:none;}
+.sana-shell .sw-muted{font-size:10.5px;color:#a9a4ad;margin:0 0 9px;}
+
+/* Dark-mode legibility without bringing back heavy motion. */
+.sana-shell.theme-dark .sw-root,.sana-shell.theme-dark .sw-portfolio-header h1,.sana-shell.theme-dark .sw-detail-heading h1{color:#f3f1f5;}
+.sana-shell.theme-dark .sw-project-card,.sana-shell.theme-dark .sw-summary-metrics,.sana-shell.theme-dark .sw-create-panel,.sana-shell.theme-dark .sw-detail-hero,.sana-shell.theme-dark .sw-panel,.sana-shell.theme-dark .sw-empty,.sana-shell.theme-dark .sw-filter-empty,.sana-shell.theme-dark .sw-phase-card{background:#262629;border-color:#3d3b40;color:#f1eff4;}
+.sana-shell.theme-dark .sw-project-card h3,.sana-shell.theme-dark .sw-panel-head h2,.sana-shell.theme-dark .sw-portfolio-toolbar h2,.sana-shell.theme-dark .sw-phase-trigger-title,.sana-shell.theme-dark .sw-milestone-fields input,.sana-shell.theme-dark .sw-summary-metrics strong,.sana-shell.theme-dark .sw-detail-metrics strong{color:#f1eff4;}
+.sana-shell.theme-dark .sw-summary-metrics>div,.sana-shell.theme-dark .sw-phase-content,.sana-shell.theme-dark .sw-milestone,.sana-shell.theme-dark .sw-phase-actions{border-color:#45434a;}
+.sana-shell.theme-dark .sw-progress-track{background:#3c3a40;}
+.sana-shell.theme-dark .sw-phase-content,.sana-shell.theme-dark .sw-add-phase-form,.sana-shell.theme-dark .sw-next-project,.sana-shell.theme-dark .sw-template-choice{background:#2f2c34;border-color:#4b4552;}
+.sana-shell.theme-dark .sw-field>input,.sana-shell.theme-dark .sw-field>select,.sana-shell.theme-dark .sw-field>textarea,.sana-shell.theme-dark .sw-milestone-add input,.sana-shell.theme-dark .sw-search,.sana-shell.theme-dark .sw-search input,.sana-shell.theme-dark .sw-portfolio-filters select{background:#333036;border-color:#4d4952;color:#f1eff4;}
+.sana-shell.theme-dark .sw-outline,.sana-shell.theme-dark .sw-icon-button{background:#36323a;border-color:#514a57;color:#ddd6e6;}
+.sana-shell.theme-dark .sw-milestone-fields input{background:transparent;}
+.sana-shell.theme-dark .sw-no-phases,.sana-shell.theme-dark .sw-client-preview{background:#322d38;border-color:#4a424f;}
+.sana-shell.theme-dark .sw-empty h2,.sana-shell.theme-dark .sw-no-phases h3,.sana-shell.theme-dark .sw-next-project strong{color:#f0eaf4;}
+.sana-shell.theme-dark .sw-state-planning,.sana-shell.theme-dark .sw-phase-pending{background:#40384d;color:#d5c7ea;}
+.sana-shell.theme-dark .sw-state-building,.sana-shell.theme-dark .sw-phase-active{background:#304638;color:#bce3cd;}
+.sana-shell.theme-dark .sw-state-at_risk,.sana-shell.theme-dark .sw-phase-blocked{background:#502e33;color:#f1c5bf;}
+.sana-shell.theme-dark .sw-state-paused{background:#4d3e2a;color:#efcf94;}
+.sana-shell.theme-dark .sw-state-delivered,.sana-shell.theme-dark .sw-phase-done,.sana-shell.theme-dark .sw-phase-review{background:#354751;color:#b5d4e3;}
+
+@media(max-width:1140px){
+  .sana-shell .sw-detail-grid{grid-template-columns:minmax(0,1fr);}
+}
+@media(max-width:800px){
+  .sana-shell .sw-portfolio-header{flex-direction:column;align-items:flex-start;}
+  .sana-shell .sw-summary-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sana-shell .sw-summary-metrics>div:nth-child(2){border-right:0;}
+  .sana-shell .sw-summary-metrics>div:nth-child(-n+2){border-bottom:1px solid #eeedef;}
+  .sana-shell .sw-portfolio-toolbar{align-items:stretch;flex-direction:column;}
+  .sana-shell .sw-portfolio-filters{width:100%;}
+  .sana-shell .sw-search{flex:1;}
+  .sana-shell .sw-search input{width:100%;min-width:0;}
+  .sana-shell .sw-portfolio-grid{grid-template-columns:minmax(0,1fr);}
+}
+@media(max-width:610px){
+  .sana-shell .sw-portfolio-header h1{font-size:28px;}
+  .sana-shell .sw-summary-metrics>div{padding:16px;}
+  .sana-shell .sw-project-card{padding:18px;}
+  .sana-shell .sw-create-grid,.sana-shell .sw-phase-edit-row,.sana-shell .sw-side-dates{grid-template-columns:minmax(0,1fr);}
+  .sana-shell .sw-detail-hero,.sana-shell .sw-panel{padding:16px;}
+  .sana-shell .sw-detail-heading h1{font-size:22px;}
+  .sana-shell .sw-detail-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;}
+  .sana-shell .sw-phase-card-top{gap:7px;}
+  .sana-shell .sw-phase-number{height:31px;width:31px;font-size:10px;}
+  .sana-shell .sw-phase-pill{font-size:9px;padding:6px;}
+  .sana-shell .sw-phase-content{padding:12px;}
+  .sana-shell .sw-panel-head{align-items:flex-start;flex-direction:column;}
+  .sana-shell .sw-portfolio-filters{flex-wrap:wrap;}
+  .sana-shell .sw-portfolio-filters select{flex:1;}
+}

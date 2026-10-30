@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Command,
   FolderKanban,
+  Code2,
   LayoutDashboard,
   Menu,
   Network,
@@ -30,10 +31,11 @@ import {
 } from "lucide-react";
 import { demoClients, demoCompanies, demoMissions, demoProjects, sampleDocs } from "@/lib/demo";
 import { ProjectManager } from "@/app/components/ProjectManager";
+import { SoftwareWorkspace } from "@/app/components/SoftwareWorkspace";
 import { CompanyBrandSection } from "@/app/components/CompanyBrandSection";
-import type { BrandGuide, Client, Company, LocalDoc, Mission, Project, ProjectDetails, Store, View } from "@/lib/types";
+import type { BrandGuide, Client, Company, LocalDoc, Mission, Project, ProjectDetails, SoftwareProject, Store, View } from "@/lib/types";
 
-const INITIAL: Store = { companies: [], projects: [], missions: [], localDocs: [], clients: [], projectDetails: {}, companyBrandGuides: {} };
+const INITIAL: Store = { companies: [], projects: [], missions: [], localDocs: [], clients: [], projectDetails: {}, companyBrandGuides: {}, softwareProjects: [] };
 const STORAGE_KEY = "autonomous-os-simple-ui-v1";
 type ProjectResumeNote = { text: string; savedAt: string };
 
@@ -48,6 +50,7 @@ const NAV: { key: View; label: string; icon: typeof LayoutDashboard }[] = [
 const COMPANY_TABS: { key: View; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "company", label: "Resumen", icon: Building2 },
   { key: "projects", label: "Proyectos", icon: FolderKanban },
+  { key: "software", label: "Software", icon: Code2 },
   { key: "missions", label: "Misiones", icon: Bot },
   { key: "docs", label: "Docs", icon: BookOpen },
   { key: "brand", label: "Brand Sheet", icon: Palette },
@@ -152,7 +155,7 @@ export function OperatingConsole() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { store?: Partial<Store>; demoMode?: boolean; companyId?: string; theme?: "light" | "dark"; resumeNotes?: Record<string, ProjectResumeNote> };
-        setStore({ ...INITIAL, ...parsed.store, clients: parsed.store?.clients ?? [], projectDetails: parsed.store?.projectDetails ?? {}, companyBrandGuides: parsed.store?.companyBrandGuides ?? {} });
+        setStore({ ...INITIAL, ...parsed.store, clients: parsed.store?.clients ?? [], projectDetails: parsed.store?.projectDetails ?? {}, companyBrandGuides: parsed.store?.companyBrandGuides ?? {}, softwareProjects: parsed.store?.softwareProjects ?? [] });
         if (typeof parsed.demoMode === "boolean") setDemoMode(parsed.demoMode);
         if (parsed.companyId) setCompanyId(parsed.companyId);
         if (parsed.resumeNotes && typeof parsed.resumeNotes === "object" && !Array.isArray(parsed.resumeNotes)) {
@@ -392,6 +395,24 @@ export function OperatingConsole() {
     }));
   }
 
+  function createSoftwareProject(project: SoftwareProject) {
+    setStore(current => ({
+      ...current,
+      softwareProjects: [...current.softwareProjects, project],
+    }));
+  }
+
+  function updateSoftwareProject(id: string, patch: Partial<SoftwareProject>) {
+    setStore(current => ({
+      ...current,
+      softwareProjects: current.softwareProjects.map(project =>
+        project.id === id
+          ? { ...project, ...patch, id: project.id, companyId: project.companyId, createdAt: project.createdAt, updatedAt: new Date().toISOString() }
+          : project
+      ),
+    }));
+  }
+
   async function importMarkdown(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file || !company) return;
@@ -518,7 +539,7 @@ export function OperatingConsole() {
                 <button onClick={() => navigate("companies")}>Empresas</button><span>/</span><strong>{company?.name}</strong>
               </div>
               <nav className="company-tabs" aria-label="Secciones de la empresa">
-                {COMPANY_TABS.map(tab => (
+                {COMPANY_TABS.filter(tab => tab.key !== "software" || company?.id === "evo").map(tab => (
                   <button key={tab.key} className={view === tab.key ? "active" : ""} onClick={() => navigate(tab.key)}>{tab.label}</button>
                 ))}
               </nav>
@@ -709,6 +730,13 @@ export function OperatingConsole() {
                 <button onClick={() => navigate("missions")}><span>Misiones</span><strong>{missions.length}</strong><small>Ver misiones</small></button>
                 <button onClick={() => navigate("docs")}><span>Docs propios</span><strong>{companyDocs.length}</strong><small>{sharedDocs.length} compartidos adicionales</small></button>
               </div>
+              {company?.id === "evo" && (
+                <button className="company-brand-quicklink company-software-quicklink" onClick={() => navigate("software")}>
+                  <span className="company-brand-quicklink-icon company-software-quicklink-icon"><Code2 size={19}/></span>
+                  <span><strong>Software y desarrollo</strong><small>{store.softwareProjects.filter(item => item.companyId === "evo").length} desarrollos · roadmap, fases, hitos y entregables separados de producción audiovisual</small></span>
+                  <ArrowUpRight size={17}/>
+                </button>
+              )}
               <button className="company-brand-quicklink" onClick={() => navigate("brand")}>
                 <span className="company-brand-quicklink-icon"><Palette size={19}/></span>
                 <span><strong>Identidad de marca</strong><small>{store.companyBrandGuides[company?.id ?? ""] ? "Consultar paleta, logos y lineamientos corporativos" : "Crear Brand Sheet: colores, logos y tipografías oficiales"}</small></span>
@@ -750,6 +778,17 @@ export function OperatingConsole() {
                 </div>
               </div>
             </>
+          )}
+
+          {view === "software" && company?.id === "evo" && (
+            <SoftwareWorkspace
+              key={company.id}
+              company={company}
+              projects={store.softwareProjects.filter(item => item.companyId === company.id)}
+              clients={clients.filter(client => client.companyId === company.id)}
+              onCreate={createSoftwareProject}
+              onUpdate={updateSoftwareProject}
+            />
           )}
 
           {view === "projects" && (
