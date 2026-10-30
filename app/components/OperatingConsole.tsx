@@ -516,20 +516,64 @@ export function OperatingConsole() {
 
           {view === "companies" && (
             <>
-              <SectionHeader title="Empresas" description="Organiza cada equipo y proyecto en su propio espacio. Los workflows se comparten." action={<button className="primary-btn" onClick={() => openModal("company")}>Nueva empresa</button>} />
-              <div className="stack-list">
-                {companies.map((item) => (
-                  <button key={item.id} className={`stack-item ${item.id === company?.id ? "selected" : ""}`} onClick={() => openCompany(item.id)}>
-                    <div className="stack-item-main">
-                      <span className="avatar-box">{item.short}</span>
-                      <div>
-                        <strong>{item.name}</strong>
-                        <p>{item.description || "Sin descripción"}</p>
+              <SectionHeader title="Empresas" description="Cada empresa tiene su propio espacio para proyectos, misiones y documentos. Los workflows son compartidos." action={<button className="primary-btn" onClick={() => openModal("company")}><Plus size={16}/> Nueva empresa</button>} />
+              <div className="sana-company-bento-gallery">
+                {companies.map((item, index) => {
+                  const ownProjects = [...(demoMode ? demoProjects : []), ...store.projects].filter(project => project.companyId === item.id);
+                  const ownMissions = [...(demoMode ? demoMissions : []), ...store.missions].filter(mission => mission.companyId === item.id);
+                  const ownDocsCount = sampleDocs.filter(doc => doc.companyId === item.id).length + store.localDocs.filter(doc => doc.companyId === item.id).length;
+                  const inProgress = ownProjects.filter(project => project.stage === "active" || project.stage === "planning").length;
+                  const nextMission = ownMissions.find(mission => !mission.demo) ?? ownMissions[0];
+
+                  return (
+                    <article key={item.id} className={`sana-company-bento sana-company-tone-${index % 4}`} aria-label={`Espacio de ${item.name}`}>
+                      <div className="sana-company-bento-grid">
+                        <button type="button" className="sana-bento-identity" onClick={() => openCompany(item.id)} aria-label={`Abrir workspace de ${item.name}`}>
+                          <span className="sana-bento-wordmark">{item.short}</span>
+                          <span className="sana-bento-identity-copy">
+                            <span className="sana-bento-eyebrow">ESPACIO DE TRABAJO {item.demo ? "· DEMO" : ""}</span>
+                            <strong>{item.name}</strong>
+                            <small>{item.description || "Organiza los proyectos y el equipo en un solo lugar."}</small>
+                          </span>
+                          <span className="sana-bento-up"><ArrowUpRight size={18}/></span>
+                        </button>
+
+                        <button type="button" className="sana-bento-tile sana-bento-projects" onClick={() => openCompany(item.id, "projects")} aria-label={`Ver proyectos de ${item.name}`}>
+                          <span>Proyectos</span>
+                          <strong>{ownProjects.length}</strong>
+                          <small>{inProgress} en marcha</small>
+                          <FolderKanban size={18} className="sana-bento-corner-icon"/>
+                        </button>
+
+                        <button type="button" className="sana-bento-tile sana-bento-missions" onClick={() => openCompany(item.id, "missions")} aria-label={`Ver misiones de ${item.name}`}>
+                          <span>Misiones</span>
+                          <strong>{ownMissions.length}</strong>
+                          <Bot size={18} className="sana-bento-corner-icon"/>
+                        </button>
+
+                        <button type="button" className="sana-bento-tile sana-bento-docs" onClick={() => openCompany(item.id, "docs")} aria-label={`Ver documentos de ${item.name}`}>
+                          <span>Docs propios</span>
+                          <strong>{ownDocsCount}</strong>
+                          <BookOpen size={18} className="sana-bento-corner-icon"/>
+                        </button>
+
+                        <button type="button" className="sana-bento-tile sana-bento-open" onClick={() => openCompany(item.id)}>
+                          <span>Entrar al</span>
+                          <strong>workspace</strong>
+                          <ArrowUpRight size={18} className="sana-bento-corner-icon"/>
+                        </button>
+
+                        <button type="button" className="sana-bento-next" onClick={() => openCompany(item.id, "missions")}>
+                          <span className="sana-bento-next-copy">
+                            <small>{nextMission ? (nextMission.demo ? "MISIÓN DE EJEMPLO" : "PRÓXIMA MISIÓN") : "SIGUIENTE PASO"}</small>
+                            <strong>{nextMission?.title ?? "Crear la primera misión"}</strong>
+                          </span>
+                          <span className="sana-bento-next-action">Continuar <ArrowUpRight size={16}/></span>
+                        </button>
                       </div>
-                    </div>
-                    <Badge tone={item.demo ? "amber" : "default"}>{item.demo ? "Ejemplo" : "Local"}</Badge>
-                  </button>
-                ))}
+                    </article>
+                  );
+                })}
               </div>
             </>
           )}
