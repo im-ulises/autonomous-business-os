@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ArrowDownToLine, ArrowLeft, Check, CheckCircle2, ExternalLink, FileImage, ImagePlus, Palette, Plus, ShieldCheck, Trash2, Type, X } from "lucide-react";
 import type { BrandColor, BrandGuide, BrandLogo, Client } from "@/lib/types";
 
@@ -45,6 +46,28 @@ export function BrandSheet({ client, onSave, onClose, scope = "client" }: Props)
     colors: [...(client.brandGuide?.colors ?? [])],
     logos: [...(client.brandGuide?.logos ?? [])],
   }));
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  useEffect(() => {
+    // Brand Sheet is an app-level dialog, not part of the page content.
+    // Lock the document while open and restore on unmount.
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        onCloseRef.current();
+      }
+    };
+    document.addEventListener("keydown", escape, true);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", escape, true);
+    };
+  }, []);
+
   const [message, setMessage] = useState("");
   const [dirty, setDirty] = useState(false);
   const approvedColors = guide.colors.filter(approved).length;
@@ -142,11 +165,15 @@ export function BrandSheet({ client, onSave, onClose, scope = "client" }: Props)
       setMessage("No se pudo guardar. Revisa el espacio de almacenamiento del navegador.");
     }
   }
-  return <div className="bs-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+  // Portaling to the app shell makes the overlay a sibling of the sticky sidebar.
+  // The content panel has its own view-transition stacking context, which
+  // otherwise traps this dialog underneath the navigation, regardless of z-index.
+  const appShell = typeof document !== "undefined" ? document.querySelector(".simple-shell") : null;
+  const dialog = <div className="bs-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="bs-dialog" role="dialog" aria-modal="true" aria-label={"Brand Sheet de " + client.name}>
       <header className="bs-topbar">
         <div className="bs-heading">
-          <button type="button" className="bs-icon-btn" onClick={onClose} aria-label="Cerrar Brand Sheet"><ArrowLeft size={19}/></button>
+          <button ref={closeButtonRef} type="button" className="bs-icon-btn" onClick={onClose} aria-label="Cerrar Brand Sheet"><ArrowLeft size={19}/></button>
           <div><span>{scope === "company" ? "EMPRESA / IDENTIDAD CORPORATIVA" : "CLIENTE / IDENTIDAD DE MARCA"}</span><h2>{client.name} <small>Brand Sheet</small></h2></div>
         </div>
         <div className="bs-top-actions">
@@ -253,4 +280,5 @@ export function BrandSheet({ client, onSave, onClose, scope = "client" }: Props)
       </div>
     </section>
   </div>;
+  return appShell ? createPortal(dialog, appShell) : dialog;
 }
