@@ -36,6 +36,7 @@ type Props = {
   onGoMissions: () => void;
 };
 const id = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+const projectMotionName = (id: string) => "abo-project-" + id.replace(/[^a-zA-Z0-9_-]/g, "-");
 function priorityName(key: ProjectPriority) { return PRIORITIES.find(p => p.key === key)?.name ?? "Normal"; }
 function stageName(key: Project["stage"]) { return STAGES.find(s => s.key === key)?.name ?? key; }
 function safeUrl(value: string) {
@@ -54,15 +55,15 @@ export function ProjectManager({
   onClearInitialProject, onNewProject, onStageChange, onDetailsChange, onSaveClient, onGoMissions,
 }: Props) {
   const [mode, setMode] = useState<"board" | "list" | "clients">("board");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialProjectId);
   const [query, setQuery] = useState("");
   const [heat, setHeat] = useState<ProjectPriority | "all">("all");
   const [clientEditor, setClientEditor] = useState(false);
   const [brandClient, setBrandClient] = useState<Client | null>(null);
   const [clientDraft, setClientDraft] = useState<Client>(EMPTY_CLIENT);
   const [taskDraft, setTaskDraft] = useState("");
-  const [noteDraft, setNoteDraft] = useState("");
-  const [briefDraft, setBriefDraft] = useState("");
+  const [noteDraft, setNoteDraft] = useState(() => initialProjectId ? details[initialProjectId]?.notes ?? "" : "");
+  const [briefDraft, setBriefDraft] = useState(() => initialProjectId ? details[initialProjectId]?.brief ?? "" : "");
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -138,7 +139,7 @@ export function ProjectManager({
   function dropOnStage(event: React.DragEvent<HTMLDivElement>, stage: Project["stage"]) {
     event.preventDefault();
     const projectId = event.dataTransfer.getData("text/plain") || draggedId;
-    if (projectId && projects.some(project => project.id === projectId)) onStageChange(projectId, stage);
+    if (projectId && projects.some(project => project.id === projectId)) smoothChange(() => onStageChange(projectId, stage));
     setDraggedId(null);
   }
   const availableClients = clients.filter(item => item.companyId === company?.id);
@@ -154,7 +155,7 @@ export function ProjectManager({
       type="button" draggable
       onDragStart={event => { event.dataTransfer.setData("text/plain", project.id); setDraggedId(project.id); }}
       onDragEnd={() => setDraggedId(null)}
-      key={project.id} className={"pm-board-card pm-priority-border-" + priority}
+      key={project.id} style={{ viewTransitionName: projectMotionName(project.id) }} className={"pm-board-card pm-priority-border-" + priority}
       onClick={() => showProject(project)}
       aria-label={"Abrir proyecto " + project.name}
     >
@@ -174,7 +175,7 @@ export function ProjectManager({
         <button onClick={closeProject}>Proyectos</button><span>/</span><strong>{selected.name}</strong>
       </div>
       <div className="pm-project-page">
-        <div className="pm-client-banner" style={{ borderTopColor: client?.brandColor ?? company.accent }}>
+        <div className="pm-client-banner" style={{ borderTopColor: client?.brandColor ?? company.accent, viewTransitionName: projectMotionName(selected.id) }}>
           <div className="pm-banner-actions">
             <button className="pm-back" onClick={closeProject}><ArrowLeft size={16}/> Todos los proyectos</button>
             <span className="pm-private-tag">{selected.demo ? "Proyecto de ejemplo · " : ""}Gestión local</span>
@@ -305,7 +306,7 @@ export function ProjectManager({
         {orderedProjects.map(project => {
           const priority = details[project.id]?.priority ?? "normal";
           const linked = clients.find(item => item.id === (details[project.id]?.clientId ?? (project.id === "sample-bigmedia" ? "client-bigmedia" : "")));
-          return <button key={project.id} className="pm-list-item" onClick={() => showProject(project)}>
+          return <button key={project.id} className="pm-list-item" style={{ viewTransitionName: projectMotionName(project.id) }} onClick={() => showProject(project)}>
             <div><strong>{project.name}</strong><small>{project.description || "Sin descripción"}</small></div>
             <Badge stage={project.stage}/><Badge priority={priority}/><span>{linked?.name ?? "Sin cliente"}</span>
           </button>;
