@@ -132,6 +132,12 @@ export type SoftwareMilestone = {
   deliverable: string;
   dueDate: string;
   done: boolean;
+  /** A checked code milestone may still differ from operational acceptance. */
+  verification?: {
+    level: "accepted" | "staging" | "implemented" | "pending";
+    summary: string;
+    url?: string;
+  };
 };
 
 export type SoftwarePhase = {
@@ -169,4 +175,16 @@ export type SoftwareProject = {
   sourceName?: string;
   sourceVersion?: string;
   commercialWindow?: string;
+  repositoryReview?: {
+    version: string;
+    reviewedAt: string;
+    repositoryBranch: string;
+    repositoryCommit: string;
+    stagingUrl: string;
+    apiDeployment: string;
+    webDeployment: string;
+    summary: string;
+    blockers: string[];
+    findings: string[];
+  };
 };
