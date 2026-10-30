@@ -47,6 +47,8 @@ export function BrandSheet({ client, onSave, onClose, scope = "client" }: Props)
     logos: [...(client.brandGuide?.logos ?? [])],
   }));
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
     // Brand Sheet is an app-level dialog, not part of the page content.
     // Lock the document while open and restore on unmount.
@@ -56,7 +58,7 @@ export function BrandSheet({ client, onSave, onClose, scope = "client" }: Props)
     const escape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.stopPropagation();
-        onClose();
+        onCloseRef.current();
       }
     };
     document.addEventListener("keydown", escape, true);
@@ -64,7 +66,7 @@ export function BrandSheet({ client, onSave, onClose, scope = "client" }: Props)
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", escape, true);
     };
-  }, [onClose]);
+  }, []);
 
   const [message, setMessage] = useState("");
   const [dirty, setDirty] = useState(false);
