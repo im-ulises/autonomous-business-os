@@ -191,9 +191,10 @@ export function OperatingConsole() {
 
   const companies = useMemo(() => [...demoCompanies, ...store.companies], [store.companies]);
   const clients = useMemo(() => {
+    const seeded = demoMode ? demoClients : [];
     const overrides = new Map(store.clients.map(client => [client.id, client]));
-    return [...demoClients.map(client => overrides.get(client.id) ?? client), ...store.clients.filter(client => !demoClients.some(demo => demo.id === client.id))];
-  }, [store.clients]);
+    return [...seeded.map(client => overrides.get(client.id) ?? client), ...store.clients.filter(client => !seeded.some(demo => demo.id === client.id))];
+  }, [store.clients, demoMode]);
   const company = companies.find((c) => c.id === companyId) ?? companies[0];
   const projects = useMemo(
     () => [...(demoMode ? demoProjects : []), ...store.projects].filter((item) => item.companyId === company?.id).map(item => ({ ...item, stage: store.projectDetails[item.id]?.stageOverride ?? item.stage })),
