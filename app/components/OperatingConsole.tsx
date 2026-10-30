@@ -24,12 +24,14 @@ import {
   ArrowUpRight,
   Sun,
   Moon,
+  ChevronUp,
 } from "lucide-react";
 import { demoCompanies, demoMissions, demoProjects, sampleDocs } from "@/lib/demo";
 import type { Company, LocalDoc, Mission, Project, Store, View } from "@/lib/types";
 
 const INITIAL: Store = { companies: [], projects: [], missions: [], localDocs: [] };
 const STORAGE_KEY = "autonomous-os-simple-ui-v1";
+type ProjectResumeNote = { text: string; savedAt: string };
 
 const NAV: { key: View; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "now", label: "Ahora", icon: LayoutDashboard },
@@ -117,6 +119,11 @@ export function OperatingConsole() {
   const [demoMode, setDemoMode] = useState(true);
   const [companyId, setCompanyId] = useState("evo");
   const [ready, setReady] = useState(false);
+  const [resumeNotes, setResumeNotes] = useState<Record<string, ProjectResumeNote>>({});
+  const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [showAllPostits, setShowAllPostits] = useState(false);
+  const [focusedProjectId, setFocusedProjectId] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [companyOpen, setCompanyOpen] = useState(false);
   const [modal, setModal] = useState<"company" | "project" | "mission" | null>(null);
@@ -139,10 +146,13 @@ export function OperatingConsole() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as { store?: Partial<Store>; demoMode?: boolean; companyId?: string; theme?: "light" | "dark" };
+        const parsed = JSON.parse(raw) as { store?: Partial<Store>; demoMode?: boolean; companyId?: string; theme?: "light" | "dark"; resumeNotes?: Record<string, ProjectResumeNote> };
         setStore({ ...INITIAL, ...parsed.store });
         if (typeof parsed.demoMode === "boolean") setDemoMode(parsed.demoMode);
         if (parsed.companyId) setCompanyId(parsed.companyId);
+        if (parsed.resumeNotes && typeof parsed.resumeNotes === "object" && !Array.isArray(parsed.resumeNotes)) {
+          setResumeNotes(parsed.resumeNotes);
+        }
         if (parsed.theme === "light" || parsed.theme === "dark") setTheme(parsed.theme);
       }
     } catch {}
@@ -150,8 +160,8 @@ export function OperatingConsole() {
   }, []);
 
   useEffect(() => {
-    if (ready) localStorage.setItem(STORAGE_KEY, JSON.stringify({ store, demoMode, companyId, theme }));
-  }, [ready, store, demoMode, companyId, theme]);
+    if (ready) localStorage.setItem(STORAGE_KEY, JSON.stringify({ store, demoMode, companyId, theme, resumeNotes }));
+  }, [ready, store, demoMode, companyId, theme, resumeNotes]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -202,6 +212,14 @@ export function OperatingConsole() {
   const allProjects = [...(demoMode ? demoProjects : []), ...store.projects];
   const allMissions = [...(demoMode ? demoMissions : []), ...store.missions];
   const globalOpenProjects = allProjects.filter(item => item.stage === "active" || item.stage === "planning").length;
+  const resumeProjects = [...allProjects].sort((a, b) => {
+    const noteA = resumeNotes[a.id]?.savedAt ?? "";
+    const noteB = resumeNotes[b.id]?.savedAt ?? "";
+    if (noteA !== noteB) return noteB.localeCompare(noteA);
+    const order: Record<Project["stage"], number> = { active: 0, planning: 1, waiting: 2, idea: 3, completed: 4 };
+    return order[a.stage] - order[b.stage] || b.createdAt.localeCompare(a.createdAt);
+  });
+  const visibleResumeProjects = resumeProjects.slice(0, showAllPostits ? resumeProjects.length : 9);
   const globalAssignedMissions = allMissions.filter(item => item.assignee !== "unassigned").length;
   const filteredViews = [...NAV, ...COMPANY_TABS].filter(item => item.label.toLowerCase().includes(query.toLowerCase().trim()));
   const filteredProjects = allProjects.filter(item => `${item.name} ${item.description}`.toLowerCase().includes(query.toLowerCase()));
@@ -223,17 +241,40 @@ export function OperatingConsole() {
   }, [effectiveDocId, company?.id, store.localDocs]);
 
   function navigate(next: View) {
+    if (next !== "projects") setFocusedProjectId(null);
     setView(next);
     setSearchOpen(false);
     setMobileOpen(false);
   }
 
   function openCompany(id: string, next: View = "company") {
+    if (next !== "projects") setFocusedProjectId(null);
     setCompanyId(id);
     setView(next);
     setCompanyOpen(false);
     setSearchOpen(false);
     setMobileOpen(false);
+  }
+
+  function toggleResumeProject(id: string) {
+    if (expandedProjectId === id) { setExpandedProjectId(null); return; }
+    setExpandedProjectId(id);
+    setNoteDraft(resumeNotes[id]?.text ?? "");
+  }
+
+  function saveResumeNote(id: string) {
+    const content = noteDraft.trim();
+    setResumeNotes(current => {
+      const next = { ...current };
+      if (content) next[id] = { text: content, savedAt: new Date().toISOString() };
+      else delete next[id];
+      return next;
+    });
+  }
+
+  function continueProject(project: Project) {
+    setFocusedProjectId(project.id);
+    openCompany(project.companyId, "projects");
   }
 
   function useWebsiteWorkflow() {
@@ -455,26 +496,72 @@ export function OperatingConsole() {
                 <h1>Hola, ¿en qué trabajamos hoy?</h1>
                 <p>Un espacio para pensar, crear y avanzar.</p>
 
-                <div className="sana-suggestion-title">
-                  <span>Sugerencias</span>
-                  <span>Elige por dónde empezar</span>
+
+                <div className="sana-resume-heading">
+                  <div><span className="sana-resume-eyebrow">RETOMA EL HILO</span>
+                    <h2>Continúa donde te quedaste</h2>
+                    <p>Proyectos, contexto y misiones a un clic de distancia.</p>
+                  </div>
+                  <div className="sana-resume-actions">
+                    <span>{resumeProjects.length} {resumeProjects.length === 1 ? "proyecto" : "proyectos"}</span>
+                    {resumeProjects.length > 9 && <button onClick={() => setShowAllPostits(value => !value)} aria-expanded={showAllPostits}>
+                      {showAllPostits ? "Ver nueve" : "Ver todos (" + resumeProjects.length + ")"}
+                      {showAllPostits ? <ChevronUp size={15}/> : <ChevronDown size={15}/>}
+                    </button>}
+                  </div>
                 </div>
-                <div className="sana-suggestion-grid">
-                  <button className="sana-suggestion sana-suggestion-lilac" onClick={() => openModal("mission")}>
-                    <span className="sana-suggestion-meta"><Sparkles size={15}/> CREAR</span>
-                    <strong>Convierte una idea en una misión.</strong>
-                    <span className="sana-suggestion-bottom">Nueva misión <ArrowUpRight size={17}/></span>
-                  </button>
-                  <button className="sana-suggestion sana-suggestion-blue" onClick={() => navigate("companies")}>
-                    <span className="sana-suggestion-meta"><Building2 size={15}/> ORGANIZAR</span>
-                    <strong>Continúa el trabajo en tus empresas.</strong>
-                    <span className="sana-suggestion-bottom">Abrir empresas <ArrowUpRight size={17}/></span>
-                  </button>
-                  <button className="sana-suggestion sana-suggestion-sand" onClick={() => navigate("workflows")}>
-                    <span className="sana-suggestion-meta"><Workflow size={15}/> AUTOMATIZAR</span>
-                    <strong>Empieza con un proceso reutilizable.</strong>
-                    <span className="sana-suggestion-bottom">Explorar workflows <ArrowUpRight size={17}/></span>
-                  </button>
+                {resumeProjects.length === 0 ? <div className="sana-postit-empty">
+                    <FolderKanban size={22}/>
+                    <strong>Tu tablero está listo para nuevos proyectos.</strong>
+                    <p>Crea un proyecto y aparecerá aquí para retomarlo cuando quieras.</p>
+                    <button className="primary-btn" onClick={() => openModal("project")}>Crear proyecto <Plus size={15}/></button>
+                  </div> :
+                  <div className="sana-postit-grid">
+                    {visibleResumeProjects.map((project, index) => {
+                      const owner = companies.find(item => item.id === project.companyId);
+                      const linkedMissions = allMissions.filter(item => item.projectId === project.id);
+                      const linkedMission = linkedMissions.find(item => !item.demo) ?? linkedMissions[0];
+                      const savedNote = resumeNotes[project.id];
+                      const expanded = expandedProjectId === project.id;
+                      const noteChanged = noteDraft.trim() !== (savedNote?.text ?? "");
+                      return <article key={project.id} className={"sana-postit sana-postit-tone-" + (index % 9) + (expanded ? " is-expanded" : "")}>
+                        <div className="sana-postit-topline">
+                          <span className="sana-postit-company"><span className="sana-postit-bullet"/>{owner?.name ?? "Empresa"}</span>
+                          <button className="sana-postit-expand" type="button" aria-expanded={expanded} aria-label={(expanded ? "Contraer " : "Expandir ") + project.name} onClick={() => toggleResumeProject(project.id)}>
+                            {expanded ? <ChevronUp size={17}/> : <ChevronDown size={17}/>}
+                          </button>
+                        </div>
+                        <button className="sana-postit-main" type="button" onClick={() => toggleResumeProject(project.id)} aria-expanded={expanded}>
+                          <span className="sana-postit-category">{savedNote ? "TU ÚLTIMA NOTA" : linkedMission ? "MISIÓN VINCULADA" : "CONTEXTO DEL PROYECTO"}</span>
+                          <strong>{project.name}</strong>
+                          <span className="sana-postit-preview">{savedNote?.text || linkedMission?.outcome || project.description || "Agrega una nota para recordar el avance."}</span>
+                        </button>
+                        <div className="sana-postit-footer">
+                          <span className="sana-postit-stage">{STAGE_LABEL[project.stage]}{project.demo ? " · Demo" : ""}</span>
+                          <button className="sana-postit-continue" type="button" onClick={() => continueProject(project)}>Continuar <ArrowUpRight size={15}/></button>
+                        </div>
+                        {expanded && <div className="sana-postit-details">
+                          <div className="sana-postit-divider"/>
+                          <span className="sana-postit-detail-label">CONTEXTO</span>
+                          <p>{project.description || "Sin descripción de proyecto."}</p>
+                          {linkedMission && <div className="sana-postit-related">
+                            <span>Misión relacionada</span>
+                            <strong>{linkedMission.title}</strong>
+                            <button onClick={() => openCompany(project.companyId, "missions")}>Ver misiones <ArrowUpRight size={14}/></button>
+                          </div>}
+                          <label className="sana-postit-detail-label" htmlFor={"resume-" + project.id}>DÓNDE ME QUEDÉ</label>
+                          <textarea id={"resume-" + project.id} rows={3} maxLength={1200} placeholder="Escribe el último avance y qué sigue..." value={noteDraft} onChange={event => setNoteDraft(event.target.value)}/>
+                          <div className="sana-postit-note-actions">
+                            <span>{savedNote ? "Nota guardada · " + new Date(savedNote.savedAt).toLocaleDateString("es-MX", { day:"numeric", month:"short" }) : "Solo en este navegador"}</span>
+                            <button disabled={!noteChanged} onClick={() => saveResumeNote(project.id)}>Guardar nota</button>
+                          </div>
+                        </div>}
+                      </article>;
+                    })}
+                  </div>}
+                <div className="sana-postit-tail">
+                  <span>{resumeProjects.length > 9 && !showAllPostits ? "Mostrando nueve proyectos" : "Ordenados por tus notas y su estado"} · Notas locales.</span>
+                  <button onClick={() => navigate("companies")}>Explorar empresas <ArrowUpRight size={14}/></button>
                 </div>
 
                 <div className="sana-command-input">
@@ -617,7 +704,20 @@ export function OperatingConsole() {
 
           {view === "projects" && (
             <>
-              <SectionHeader title="Proyectos" description={`Proyectos exclusivos de ${company?.name}.`} action={<button className="primary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
+
+              <SectionHeader title="Proyectos" description={"Proyectos exclusivos de " + company?.name + "."} action={<button className="primary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
+              {focusedProjectId && projects.some(item => item.id === focusedProjectId) && (() => {
+                const focus = projects.find(item => item.id === focusedProjectId)!;
+                const note = resumeNotes[focus.id];
+                const related = missions.filter(item => item.projectId === focus.id);
+                return <section className="card sana-project-resume-panel">
+                  <div className="sana-project-resume-head"><div><span>RETOMANDO PROYECTO</span><h2>{focus.name}</h2></div><button className="sana-project-resume-dismiss" onClick={() => setFocusedProjectId(null)} aria-label="Cerrar detalle del proyecto"><X size={16}/></button></div>
+                  <p>{focus.description || "Sin descripción todavía."}</p>
+                  <div className="sana-project-resume-tags"><Badge>{STAGE_LABEL[focus.stage]}</Badge>{focus.demo && <Badge tone="amber">Ejemplo</Badge>}<Badge>{related.length} {related.length === 1 ? "misión" : "misiones"}</Badge></div>
+                  {note && <div className="sana-project-resume-note"><span>TU ÚLTIMA NOTA</span><p>{note.text}</p></div>}
+                  {related.length > 0 && <div className="sana-project-resume-related"><span>MISIONES VINCULADAS</span>{related.slice(0, 3).map(item => <p key={item.id}>{item.title}</p>)}<button onClick={() => navigate("missions")}>Abrir misiones <ArrowUpRight size={14}/></button></div>}
+                </section>;
+              })()}
               <section className="card">
                 {projects.length === 0 ? (
                   <EmptyState title="Sin proyectos" description="Agrega un proyecto para empezar a agrupar documentos y misiones." action={<button className="secondary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
