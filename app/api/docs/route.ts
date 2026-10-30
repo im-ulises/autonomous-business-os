@@ -1,16 +1,25 @@
-import { NextResponse } from "next/server";
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import path from "node:path";
+import { NextRequest, NextResponse } from "next/server";
 
-const DOCS = new Set(["overview", "engineering", "knowledge-contract"]);
+// This route serves ONLY the three bundled PUBLIC STARTER documents.
+// Never extend it to sensitive workspace docs without authentication and Crobi grants.
+const ALLOWED = new Set(["overview", "engineering", "docs"]);
+const FILES: Record<string, string> = {
+  overview: "overview.md",
+  engineering: "engineering-playbook.md",
+  docs: "docs-contract.md",
+};
 
-export async function GET(req: Request) {
-  const id = new URL(req.url).searchParams.get("id") ?? "overview";
-  if (!DOCS.has(id)) return NextResponse.json({ error: "Document not found" }, { status: 404 });
-
+export async function GET(req: NextRequest) {
+  const slug = req.nextUrl.searchParams.get("slug") || "overview";
+  if (!ALLOWED.has(slug)) {
+    return NextResponse.json({ error: "Document not found" }, { status: 404 });
+  }
   try {
-    const source = await readFile(join(process.cwd(), "content", "docs", id + ".md"), "utf8");
-    return NextResponse.json({ id, source, demo: true });
+    const filepath = path.join(process.cwd(), "content", "docs", FILES[slug]);
+    const content = await readFile(filepath, "utf8");
+    return NextResponse.json({ slug, content }, { headers: { "Cache-Control": "private, no-store" } });
   } catch {
     return NextResponse.json({ error: "Document unavailable" }, { status: 503 });
   }
