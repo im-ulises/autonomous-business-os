@@ -1,4 +1,4 @@
-export type View = "now" | "companies" | "company" | "brand" | "software" | "departments" | "projects" | "missions" | "docs" | "workflows" | "results" | "systems";
+export type View = "now" | "companies" | "company" | "brand" | "software" | "departments" | "proposals" | "projects" | "missions" | "docs" | "workflows" | "results" | "systems";
 
 export type Company = {
   id: string;
