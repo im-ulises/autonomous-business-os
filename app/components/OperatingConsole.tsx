@@ -1,268 +1,702 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  Activity, ArrowRight, BookOpenText, Bot, BriefcaseBusiness, CheckCheck,
-  ChevronDown, CircleHelp, Command, FileText, FolderKanban, GitBranch,
-  Layers3, LayoutDashboard, Menu, Network, Plus, Search, ShieldCheck,
-  Sparkles, Workflow, X
+  Activity,
+  BookOpen,
+  Bot,
+  Building2,
+  ChevronDown,
+  Command,
+  FolderKanban,
+  LayoutDashboard,
+  Menu,
+  Network,
+  Plus,
+  Search,
+  Settings2,
+  ShieldCheck,
+  Workflow,
+  X,
 } from "lucide-react";
+import { demoCompanies, demoMissions, demoProjects, sampleDocs } from "@/lib/demo";
+import type { Company, LocalDoc, Mission, Project, Store, View } from "@/lib/types";
 
-type Section = "Ahora" | "Empresas" | "Departamentos" | "Proyectos" | "Misiones" | "Docs" | "Workflows" | "Resultados" | "Sistema";
-type Company = { id: string; name: string; initials: string; description: string };
-type Project = { id: string; companyId: string; name: string; description: string; status: "Planificación" | "Activo" | "En espera" };
-type Mission = { id: string; companyId: string; projectId?: string; title: string; outcome: string; status: "Borrador" | "Planificada" };
-type Saved = { companies: Company[]; projects: Project[]; missions: Mission[] };
-type DocId = "overview" | "engineering" | "knowledge-contract";
+const INITIAL: Store = { companies: [], projects: [], missions: [], localDocs: [] };
+const STORAGE_KEY = "autonomous-os-simple-ui-v1";
 
-const STORAGE = "autonomous-business-os-demo-v1";
-const initial: Saved = {
-  companies: [{ id: "demo", name: "Empresa de demostración", initials: "DM", description: "Workspace de ejemplo, sin conexión a agentes reales" }],
-  projects: [{ id: "demo-project", companyId: "demo", name: "Sitio web de ejemplo", description: "Diseño y mantenimiento", status: "Planificación" }],
-  missions: [{ id: "demo-mission", companyId: "demo", projectId: "demo-project", title: "Preparar propuesta de cambios", outcome: "Pull request verificable", status: "Borrador" }],
+const NAV: { key: View; label: string; icon: typeof LayoutDashboard }[] = [
+  { key: "now", label: "Ahora", icon: LayoutDashboard },
+  { key: "companies", label: "Empresas", icon: Building2 },
+  { key: "departments", label: "Departamentos", icon: Network },
+  { key: "projects", label: "Proyectos", icon: FolderKanban },
+  { key: "missions", label: "Misiones", icon: Bot },
+  { key: "docs", label: "Docs", icon: BookOpen },
+  { key: "workflows", label: "Workflows", icon: Workflow },
+  { key: "results", label: "Resultados", icon: Activity },
+  { key: "systems", label: "Sistema", icon: Settings2 },
+];
+
+const STAGE_LABEL: Record<Project["stage"], string> = {
+  idea: "Idea",
+  planning: "Planeación",
+  active: "Activo",
+  waiting: "En espera",
+  completed: "Finalizado",
 };
 
-const sidebar: { title: Section; icon: typeof LayoutDashboard }[] = [
-  { title: "Ahora", icon: LayoutDashboard },
-  { title: "Empresas", icon: BriefcaseBusiness },
-  { title: "Departamentos", icon: Network },
-  { title: "Proyectos", icon: FolderKanban },
-  { title: "Misiones", icon: Bot },
-  { title: "Docs", icon: BookOpenText },
-  { title: "Workflows", icon: Workflow },
-  { title: "Resultados", icon: Activity },
-  { title: "Sistema", icon: Layers3 },
-];
+const ASSIGNEE_LABEL: Record<Mission["assignee"], string> = {
+  claude: "Claude Code",
+  codex: "ChatGPT / Codex",
+  grok: "Grok",
+  unassigned: "Sin asignar",
+};
 
-const departments = [
-  { name: "Dirección", description: "Objetivos, estrategia y supervisión" },
-  { name: "Ingeniería", description: "Desarrollo, calidad y mantenimiento" },
-  { name: "Marketing", description: "Campañas, creatividad y distribución" },
-  { name: "Ventas", description: "Prospectos, propuestas y seguimiento" },
-  { name: "Operaciones", description: "Procesos, proveedores y entregas" },
-  { name: "Finanzas", description: "Presupuestos, resultados y control" },
-];
+const DEPARTMENTS = [
+  ["Dirección", "Objetivos, decisiones y prioridades"],
+  ["Ingeniería", "Desarrollo, QA y despliegues"],
+  ["Ventas", "Prospectos, propuestas y seguimiento"],
+  ["Marketing", "Campañas, contenidos y distribución"],
+  ["Operaciones", "Procesos, dependencias y proveedores"],
+  ["Finanzas", "Costos, margen y cobranza"],
+] as const;
 
-const documents: { id: DocId; title: string; category: string }[] = [
-  { id: "overview", title: "Business OS — Overview", category: "Fundamentos" },
-  { id: "engineering", title: "Engineering — Playbook", category: "Procesos" },
-  { id: "knowledge-contract", title: "Contrato de conocimiento", category: "Arquitectura" },
-];
+function uid() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
 
-function generateId() {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now());
+function Badge({ children, tone = "default" }: { children: React.ReactNode; tone?: "default" | "green" | "amber" | "blue" }) {
+  return <span className={`ui-badge ui-badge-${tone}`}>{children}</span>;
+}
+
+function SectionHeader({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="section-header-simple">
+      <div>
+        <h1>{title}</h1>
+        <p>{description}</p>
+      </div>
+      {action && <div>{action}</div>}
+    </div>
+  );
+}
+
+function EmptyState({ title, description, action }: { title: string; description: string; action?: React.ReactNode }) {
+  return (
+    <div className="empty-state-simple">
+      <h3>{title}</h3>
+      <p>{description}</p>
+      {action}
+    </div>
+  );
 }
 
 export function OperatingConsole() {
-  const [section, setSection] = useState<Section>("Ahora");
-  const [saved, setSaved] = useState<Saved>(initial);
-  const [companyId, setCompanyId] = useState("demo");
-  const [hydrated, setHydrated] = useState(false);
-  const [docId, setDocId] = useState<DocId>("overview");
-  const [markdown, setMarkdown] = useState("");
-  const [status, setStatus] = useState({ configured: false, connected: false, label: "Sin verificar" });
-  const [search, setSearch] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [view, setView] = useState<View>("now");
+  const [store, setStore] = useState<Store>(INITIAL);
+  const [demoMode, setDemoMode] = useState(true);
+  const [companyId, setCompanyId] = useState("evo");
+  const [ready, setReady] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [companyOpen, setCompanyOpen] = useState(false);
+  const [modal, setModal] = useState<"company" | "project" | "mission" | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [projectId, setProjectId] = useState("");
+  const [assignee, setAssignee] = useState<Mission["assignee"]>("unassigned");
+  const [docId, setDocId] = useState("overview");
+  const [docText, setDocText] = useState("");
+  const [docRaw, setDocRaw] = useState(false);
+  const [docError, setDocError] = useState("");
+  const [docLoading, setDocLoading] = useState(false);
+  const [crobi, setCrobi] = useState<{ connected: boolean; configured: boolean; label: string } | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(STORAGE);
+      const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed: Saved = JSON.parse(raw);
-        if (Array.isArray(parsed.companies) && Array.isArray(parsed.projects) && Array.isArray(parsed.missions)) {
-          setSaved(parsed);
-          setCompanyId(parsed.companies[0]?.id || "demo");
-        }
+        const parsed = JSON.parse(raw) as { store?: Partial<Store>; demoMode?: boolean; companyId?: string };
+        setStore({ ...INITIAL, ...parsed.store });
+        if (typeof parsed.demoMode === "boolean") setDemoMode(parsed.demoMode);
+        if (parsed.companyId) setCompanyId(parsed.companyId);
       }
-    } catch { /* Invalid local sample data: safely use demo defaults. */ }
-    setHydrated(true);
+    } catch {}
+    setReady(true);
   }, []);
 
   useEffect(() => {
-    if (hydrated) window.localStorage.setItem(STORAGE, JSON.stringify(saved));
-  }, [saved, hydrated]);
+    if (ready) localStorage.setItem(STORAGE_KEY, JSON.stringify({ store, demoMode, companyId }));
+  }, [ready, store, demoMode, companyId]);
 
   useEffect(() => {
-    let active = true;
-    fetch("/api/docs?id=" + encodeURIComponent(docId), { cache: "no-store" })
-      .then((r) => { if (!r.ok) throw Error("Document unavailable"); return r.json(); })
-      .then((d: { source: string }) => { if (active) setMarkdown(d.source); })
-      .catch(() => { if (active) setMarkdown("# Documento no disponible"); });
-    return () => { active = false; };
-  }, [docId]);
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen(true);
+        setTimeout(() => searchRef.current?.focus(), 0);
+      }
+      if (event.key === "Escape") {
+        setSearchOpen(false);
+        setCompanyOpen(false);
+        setModal(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     fetch("/api/crobi/status", { cache: "no-store" })
       .then((r) => r.json())
-      .then((r: { configured: boolean; connected: boolean; label: string }) => setStatus(r))
-      .catch(() => setStatus({ configured: false, connected: false, label: "Sin verificar" }));
+      .then(setCrobi)
+      .catch(() => setCrobi({ connected: false, configured: false, label: "Sin conexión" }));
   }, []);
 
-  const selectedCompany = saved.companies.find((c) => c.id === companyId) || saved.companies[0];
-  const projects = useMemo(() => saved.projects.filter((p) => p.companyId === companyId), [saved.projects, companyId]);
-  const missions = useMemo(() => saved.missions.filter((m) => m.companyId === companyId), [saved.missions, companyId]);
+  useEffect(() => {
+    const localDoc = store.localDocs.find((d) => d.id === docId);
+    if (localDoc) {
+      setDocText(localDoc.content);
+      setDocError("");
+      setDocLoading(false);
+      return;
+    }
+    setDocLoading(true);
+    setDocError("");
+    fetch(`/api/docs?id=${encodeURIComponent(docId)}`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error("Not available");
+        return r.json();
+      })
+      .then((j: { source: string }) => setDocText(j.source))
+      .catch(() => {
+        setDocText("");
+        setDocError("No fue posible cargar este documento.");
+      })
+      .finally(() => setDocLoading(false));
+  }, [docId, store.localDocs]);
 
-  function createCompany() {
-    const name = window.prompt("Nombre de la empresa");
-    if (!name?.trim()) return;
-    const id = generateId();
-    setSaved((current) => ({
-      ...current,
-      companies: [...current.companies, { id, name: name.trim(), initials: name.trim().slice(0, 2).toUpperCase(), description: "Nuevo workspace local" }],
-    }));
-    setCompanyId(id);
-    setSection("Empresas");
+  const companies = useMemo(() => [...demoCompanies, ...store.companies], [store.companies]);
+  const company = companies.find((c) => c.id === companyId) ?? companies[0];
+  const projects = useMemo(
+    () => [...(demoMode ? demoProjects : []), ...store.projects].filter((item) => item.companyId === company?.id),
+    [demoMode, store.projects, company?.id],
+  );
+  const missions = useMemo(
+    () => [...(demoMode ? demoMissions : []), ...store.missions].filter((item) => item.companyId === company?.id),
+    [demoMode, store.missions, company?.id],
+  );
+  const docs = [
+    ...sampleDocs.filter((item) => item.companyId === "all" || item.companyId === company?.id),
+    ...store.localDocs
+      .filter((item) => item.companyId === company?.id)
+      .map((item) => ({ id: item.id, name: item.name, path: `${item.name}.md`, companyId: item.companyId, category: "Importados" })),
+  ];
+
+  const openProjects = projects.filter((item) => item.stage === "active" || item.stage === "planning").length;
+  const assignedMissions = missions.filter((item) => item.assignee !== "unassigned").length;
+  const filteredViews = NAV.filter((item) => item.label.toLowerCase().includes(query.toLowerCase().trim()));
+  const filteredProjects = projects.filter((item) => `${item.name} ${item.description}`.toLowerCase().includes(query.toLowerCase()));
+  const filteredMissions = missions.filter((item) => `${item.title} ${item.outcome}`.toLowerCase().includes(query.toLowerCase()));
+
+  function navigate(next: View) {
+    setView(next);
+    setSearchOpen(false);
+    setMobileOpen(false);
   }
-  function createProject() {
-    const name = window.prompt("Nombre del proyecto");
-    if (!name?.trim()) return;
-    setSaved((current) => ({
-      ...current,
-      projects: [...current.projects, { id: generateId(), companyId, name: name.trim(), description: "Borrador local", status: "Planificación" }],
-    }));
-    setSection("Proyectos");
+
+  function openModal(kind: "company" | "project" | "mission") {
+    setModal(kind);
+    setName("");
+    setDescription("");
+    setProjectId("");
+    setAssignee("unassigned");
   }
-  function createMission() {
-    const title = window.prompt("¿Qué resultado necesitas?");
-    if (!title?.trim()) return;
-    setSaved((current) => ({
-      ...current,
-      missions: [...current.missions, { id: generateId(), companyId, title: title.trim(), outcome: "Por definir", status: "Borrador" }],
-    }));
-    setSection("Misiones");
+
+  function saveModal(event: React.FormEvent) {
+    event.preventDefault();
+    const trimmed = name.trim();
+    if (!trimmed || !company) return;
+
+    if (modal === "company") {
+      const next: Company = {
+        id: uid(),
+        name: trimmed,
+        short: trimmed.slice(0, 2).toUpperCase(),
+        description: description.trim(),
+        accent: "#a6b0ff",
+      };
+      setStore((current) => ({ ...current, companies: [...current.companies, next] }));
+      setCompanyId(next.id);
+      setView("companies");
+    }
+
+    if (modal === "project") {
+      const next: Project = {
+        id: uid(),
+        companyId: company.id,
+        name: trimmed,
+        description: description.trim(),
+        stage: "planning",
+        createdAt: new Date().toISOString(),
+      };
+      setStore((current) => ({ ...current, projects: [...current.projects, next] }));
+      setView("projects");
+    }
+
+    if (modal === "mission") {
+      const next: Mission = {
+        id: uid(),
+        companyId: company.id,
+        projectId: projectId || undefined,
+        title: trimmed,
+        outcome: description.trim(),
+        assignee,
+        status: "local_draft",
+        createdAt: new Date().toISOString(),
+      };
+      setStore((current) => ({ ...current, missions: [...current.missions, next] }));
+      setView("missions");
+    }
+
+    setModal(null);
   }
-  function changeProject(id: string) {
-    setSaved((current) => ({
+
+  function updateProjectStage(id: string, stage: Project["stage"]) {
+    setStore((current) => ({
       ...current,
-      projects: current.projects.map((p) => p.id !== id ? p : ({ ...p, status: p.status === "Planificación" ? "Activo" : p.status === "Activo" ? "En espera" : "Planificación" })),
+      projects: current.projects.map((item) => (item.id === id ? { ...item, stage } : item)),
     }));
   }
 
-  const visibleNav = sidebar.filter((item) => item.title.toLowerCase().includes(search.trim().toLowerCase()));
+  async function importMarkdown(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file || !company) return;
+    if (!file.name.toLowerCase().endsWith(".md") || file.size > 512_000) {
+      setDocError("Selecciona un archivo .md de hasta 500 KB.");
+      return;
+    }
+    const content = await file.text();
+    const next: LocalDoc = {
+      id: uid(),
+      companyId: company.id,
+      name: file.name.replace(/\.md$/i, ""),
+      content,
+      createdAt: new Date().toISOString(),
+    };
+    setStore((current) => ({ ...current, localDocs: [next, ...current.localDocs] }));
+    setDocId(next.id);
+    setDocError("");
+    event.target.value = "";
+  }
+
+  const focusMission = filteredMissions[0] ?? missions[0];
+  const focusProject = filteredProjects[0] ?? projects[0];
 
   return (
-    <div className="shell">
-      <aside className={"sidebar " + (menuOpen ? "sidebar-open" : "")}>
-        <div className="brand">
-          <div className="brand-mark"><Sparkles size={18}/></div>
-          <div><strong>Autonomous</strong><small>BUSINESS OS</small></div>
-          <button className="mobile-close icon-button" onClick={() => setMenuOpen(false)} aria-label="Cerrar menú"><X size={18}/></button>
+    <div className="simple-shell">
+      <aside className={`simple-sidebar ${mobileOpen ? "open" : ""}`}>
+        <div className="simple-brand">
+          <div className="brand-dot">A</div>
+          <div>
+            <strong>Autonomous OS</strong>
+            <small>Control de negocios + Crobi</small>
+          </div>
         </div>
-        <button className="workspace" onClick={() => setSection("Empresas")}>
-          <span className="workspace-avatar">{selectedCompany?.initials || "OS"}</span>
-          <span><strong>{selectedCompany?.name || "Mi empresa"}</strong><small>Workspace de demostración</small></span>
-          <ChevronDown size={15}/>
+
+        <button className="company-switch" onClick={() => setCompanyOpen((value) => !value)}>
+          <div>
+            <span className="label">Empresa actual</span>
+            <strong>{company?.name ?? "Sin empresa"}</strong>
+          </div>
+          <ChevronDown size={16} />
         </button>
-        <label className="nav-search-wrap"><Search size={15}/><input id="nav-search" aria-label="Buscar secciones" placeholder="Buscar secciones" value={search} onChange={(event) => setSearch(event.target.value)}/></label>
-        <nav className="nav" aria-label="Navegación principal">
-          {visibleNav.map(({ title, icon: Icon }) =>
-            <button key={title} className={"nav-item " + (section === title ? "nav-active" : "")}
-              onClick={() => { setSection(title); setMenuOpen(false); }}>
-              <Icon size={17}/><span>{title}</span>
-            </button>
-          )}
+
+        {companyOpen && (
+          <div className="company-menu">
+            {companies.map((item) => (
+              <button
+                key={item.id}
+                className={`company-option ${item.id === company?.id ? "active" : ""}`}
+                onClick={() => {
+                  setCompanyId(item.id);
+                  setCompanyOpen(false);
+                  setMobileOpen(false);
+                }}
+              >
+                <span>{item.short}</span>
+                <div>
+                  <strong>{item.name}</strong>
+                  <small>{item.demo ? "Demo" : "Local"}</small>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <nav className="simple-nav">
+          {NAV.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button key={item.key} className={view === item.key ? "active" : ""} onClick={() => navigate(item.key)}>
+                <Icon size={17} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </nav>
-        <div className="sidebar-bottom">
-          <div className="sidebar-caption">EJECUTOR</div>
-          <div className="system-row"><span className={"status-dot " + (status.connected ? "online" : "")}/><span>Crobi: {status.label}</span></div>
-          <div className="side-footnote">Sin ejecuciones autónomas activas.</div>
+
+        <div className="simple-sidebar-footer">
+          <label className="demo-toggle">
+            <input type="checkbox" checked={demoMode} onChange={() => setDemoMode((value) => !value)} />
+            <span>Mostrar ejemplos</span>
+          </label>
+          <div className="status-mini">
+            <span className={`dot ${crobi?.connected ? "online" : "offline"}`} />
+            <span>{crobi?.label ?? "Comprobando Crobi"}</span>
+          </div>
         </div>
       </aside>
-      {menuOpen && <button className="mobile-overlay" aria-label="Cerrar navegación" onClick={() => setMenuOpen(false)}/>}
-      <main className="main">
-        <header className="topbar">
-          <div className="topbar-left">
-            <button className="icon-button menu-toggle" aria-label="Abrir navegación" onClick={() => setMenuOpen(true)}><Menu size={20}/></button>
-            <span className="crumb">Workspace</span><span className="slash">/</span><strong>{section}</strong>
-          </div>
-          <div className="topbar-right">
-            <span className="demo-tag"><span className="status-dot"/ > MODO DEMO</span>
-            <button className="icon-button" title="Buscar secciones" onClick={() => { const el = document.getElementById("nav-search"); el?.focus(); }}><Search size={18}/></button>
-            <span className="user-avatar">U</span>
+
+      <main className="simple-main">
+        <header className="simple-topbar">
+          <button className="icon-btn mobile-only" onClick={() => setMobileOpen(true)} aria-label="Abrir menú">
+            <Menu size={18} />
+          </button>
+          <button className="search-btn" onClick={() => setSearchOpen(true)}>
+            <Search size={16} />
+            <span>Buscar vista, proyecto o misión</span>
+            <kbd>⌘K</kbd>
+          </button>
+          <div className="topbar-actions">
+            <button className="secondary-btn" onClick={() => openModal("project")}>Proyecto</button>
+            <button className="primary-btn" onClick={() => openModal("mission")}>Nueva misión</button>
           </div>
         </header>
-        <div className="main-content">
-          <div className="eyebrow">AUTONOMOUS BUSINESS OS / V0.1</div>
-          <div className="page-heading">
-            <div>
-              <h1>{section === "Ahora" ? "Ahora" : section}</h1>
-              <p className="subtitle">{section === "Ahora" ? "Decisiones y trabajo de tus equipos, sin ruido." : "Espacio de trabajo de demostración. Los cambios se guardan solo en este navegador."}</p>
-            </div>
-            {(section === "Empresas" || section === "Proyectos" || section === "Misiones") &&
-              <button className="primary-button" onClick={section === "Empresas" ? createCompany : section === "Proyectos" ? createProject : createMission}><Plus size={16}/> Crear {section === "Empresas" ? "empresa" : section === "Proyectos" ? "proyecto" : "misión"}</button>}
-          </div>
-          <div className="notice"><ShieldCheck size={17}/><span>Vista de demostración · Los agentes aún no están conectados. No se ejecutan acciones externas.</span></div>
 
-          {section === "Ahora" && <>
-            <div className="metric-grid">
-              <div className="metric-card"><small>Decisiones pendientes de Crobi</small><strong>—</strong><span>Sin conexión a aprobaciones reales</span></div>
-              <div className="metric-card"><small>Misiones locales</small><strong>{missions.length}</strong><span>Solo borradores y planes</span></div>
-              <div className="metric-card"><small>Proyectos</small><strong>{projects.length}</strong><span>En este workspace</span></div>
-            </div>
-            <div className="two-column">
-              <section className="panel">
-                <div className="panel-heading"><div><h2>Decisiones</h2><p>Solo los asuntos que requieren tu aprobación.</p></div><CheckCheck size={18}/></div>
-                <div className="empty-state"><ShieldCheck size={24}/><strong>No hay decisiones conectadas</strong><span>Por seguridad, no inventamos aprobaciones ni actividad de agentes.</span></div>
+        <section className="simple-content">
+          {view === "now" && (
+            <>
+              <SectionHeader
+                title="Ahora"
+                description="Una vista simple para decidir, no para administrar 50 tarjetas. Enfócate en lo siguiente y supervisa por excepción."
+              />
+
+              <div className="focus-grid">
+                <section className="card focus-card">
+                  <div className="card-topline">Siguiente decisión</div>
+                  <h2>{focusMission?.title ?? "Aún no hay misiones"}</h2>
+                  <p>{focusMission?.outcome ?? "Crea una misión para definir el siguiente resultado esperado."}</p>
+                  <div className="focus-meta">
+                    <Badge tone="blue">{focusMission ? ASSIGNEE_LABEL[focusMission.assignee] : "Sin asignar"}</Badge>
+                    <Badge tone={focusMission?.demo ? "amber" : "default"}>{focusMission?.demo ? "Ejemplo" : "Borrador local"}</Badge>
+                  </div>
+                  <div className="focus-actions">
+                    <button className="primary-btn" onClick={() => navigate("missions")}>Ver misiones</button>
+                    <button className="secondary-btn" onClick={() => navigate("docs")}>Abrir docs</button>
+                  </div>
+                </section>
+
+                <section className="card summary-card">
+                  <div className="summary-row"><span>Proyectos abiertos</span><strong>{openProjects}</strong></div>
+                  <div className="summary-row"><span>Misiones asignadas</span><strong>{assignedMissions}</strong></div>
+                  <div className="summary-row"><span>Estado Crobi</span><strong>{crobi?.connected ? "Conectado" : "No conectado"}</strong></div>
+                  <div className="summary-row"><span>Docs disponibles</span><strong>{docs.length}</strong></div>
+                </section>
+              </div>
+
+              <div className="two-panel-grid">
+                <section className="card">
+                  <div className="block-heading">
+                    <h3>Proyectos</h3>
+                    <button className="text-btn" onClick={() => navigate("projects")}>Ver todos</button>
+                  </div>
+                  {projects.length === 0 ? (
+                    <EmptyState title="Sin proyectos" description="Crea un proyecto para empezar a organizar trabajo con contexto." action={<button className="secondary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
+                  ) : (
+                    <div className="simple-table">
+                      <div className="table-row table-head"><span>Proyecto</span><span>Estado</span><span>Origen</span></div>
+                      {projects.slice(0, 4).map((item) => (
+                        <div className="table-row" key={item.id}>
+                          <div>
+                            <strong>{item.name}</strong>
+                            <small>{item.description}</small>
+                          </div>
+                          <Badge>{STAGE_LABEL[item.stage]}</Badge>
+                          <span className="muted-inline">{item.demo ? "Demo" : "Local"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                <section className="card">
+                  <div className="block-heading">
+                    <h3>Atajos</h3>
+                  </div>
+                  <div className="shortcut-list">
+                    <button onClick={() => navigate("docs")}>Abrir base de conocimiento</button>
+                    <button onClick={() => navigate("systems")}>Revisar runtimes y conexión</button>
+                    <button onClick={() => navigate("workflows")}>Ver workflow activo</button>
+                    <button onClick={() => openModal("company")}>Crear nueva empresa</button>
+                  </div>
+                </section>
+              </div>
+            </>
+          )}
+
+          {view === "companies" && (
+            <>
+              <SectionHeader title="Empresas" description="Cada negocio vive en su propio workspace. Menos ruido, mismo poder." action={<button className="primary-btn" onClick={() => openModal("company")}>Nueva empresa</button>} />
+              <div className="stack-list">
+                {companies.map((item) => (
+                  <button key={item.id} className={`stack-item ${item.id === company?.id ? "selected" : ""}`} onClick={() => setCompanyId(item.id)}>
+                    <div className="stack-item-main">
+                      <span className="avatar-box">{item.short}</span>
+                      <div>
+                        <strong>{item.name}</strong>
+                        <p>{item.description || "Sin descripción"}</p>
+                      </div>
+                    </div>
+                    <Badge tone={item.demo ? "amber" : "default"}>{item.demo ? "Ejemplo" : "Local"}</Badge>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {view === "departments" && (
+            <>
+              <SectionHeader title="Departamentos" description="Mantengo la capacidad, pero la presento como una lista clara de responsabilidades." />
+              <div className="card">
+                <div className="simple-table">
+                  <div className="table-row table-head"><span>Departamento</span><span>Responsabilidad</span></div>
+                  {DEPARTMENTS.map(([dept, desc]) => (
+                    <div className="table-row two-col" key={dept}><strong>{dept}</strong><span>{desc}</span></div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {view === "projects" && (
+            <>
+              <SectionHeader title="Proyectos" description="Tabla clara primero, detalles después. Menos tarjetas, misma información." action={<button className="primary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
+              <section className="card">
+                {projects.length === 0 ? (
+                  <EmptyState title="Sin proyectos" description="Agrega un proyecto para empezar a agrupar documentos y misiones." action={<button className="secondary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
+                ) : (
+                  <div className="simple-table">
+                    <div className="table-row table-head"><span>Proyecto</span><span>Estado</span><span>Creado</span></div>
+                    {projects.map((item) => (
+                      <div className="table-row" key={item.id}>
+                        <div>
+                          <strong>{item.name}</strong>
+                          <small>{item.description || "Sin descripción"}</small>
+                        </div>
+                        {item.demo ? (
+                          <Badge tone="amber">{STAGE_LABEL[item.stage]}</Badge>
+                        ) : (
+                          <select className="simple-select" value={item.stage} onChange={(event) => updateProjectStage(item.id, event.target.value as Project["stage"])}>
+                            {Object.entries(STAGE_LABEL).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
+                          </select>
+                        )}
+                        <span className="muted-inline">{new Date(item.createdAt).toLocaleDateString("es-MX")}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
-              <section className="panel">
-                <div className="panel-heading"><div><h2>Misiones</h2><p>Resultados por entregar, sin tareas manuales.</p></div><Bot size={18}/></div>
-                {missions.map((mission) => <div className="list-row" key={mission.id}><span className="list-icon"><Bot size={16}/></span><span className="list-main"><strong>{mission.title}</strong><small>{mission.outcome}</small></span><span className="pill">{mission.status}</span></div>)}
-                <button className="text-button" onClick={() => setSection("Misiones")}>Ver todas las misiones <ArrowRight size={15}/></button>
+            </>
+          )}
+
+          {view === "missions" && (
+            <>
+              <SectionHeader title="Misiones" description="Piensa en resultados esperados, no en tareas sueltas. Esta vista se queda limpia y supervisable." action={<button className="primary-btn" onClick={() => openModal("mission")}>Nueva misión</button>} />
+              <section className="card">
+                {missions.length === 0 ? (
+                  <EmptyState title="Sin misiones" description="Describe qué resultado quieres obtener para esta empresa." action={<button className="secondary-btn" onClick={() => openModal("mission")}>Crear misión</button>} />
+                ) : (
+                  <div className="simple-table">
+                    <div className="table-row table-head"><span>Misión</span><span>Ejecutor</span><span>Proyecto</span></div>
+                    {missions.map((item) => (
+                      <div className="table-row" key={item.id}>
+                        <div>
+                          <strong>{item.title}</strong>
+                          <small>{item.outcome || "Resultado pendiente de definir"}</small>
+                        </div>
+                        <Badge tone={item.assignee === "unassigned" ? "default" : "blue"}>{ASSIGNEE_LABEL[item.assignee]}</Badge>
+                        <span className="muted-inline">{projects.find((p) => p.id === item.projectId)?.name ?? "Sin proyecto"}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
-            </div>
-            <section className="command-card">
-              <div className="command-orb"><Command size={24}/></div>
-              <div><h2>¿Qué necesitas que haga tu equipo?</h2><p>Describe el resultado. Por ahora se guarda como misión local; no se inicia ningún agente.</p></div>
-              <button className="secondary-button" onClick={createMission}>Nueva misión <ArrowRight size={15}/></button>
-            </section>
-          </>}
+            </>
+          )}
 
-          {section === "Empresas" && <div className="item-grid">
-            {saved.companies.map((c) => <button className={"tile company-tile " + (companyId === c.id ? "tile-selected" : "")} key={c.id} onClick={() => setCompanyId(c.id)}>
-              <span className="large-avatar">{c.initials}</span><h3>{c.name}</h3><p>{c.description}</p><span className="tile-bottom">{companyId === c.id ? "Workspace actual" : "Cambiar a empresa"} <ArrowRight size={15}/></span>
-            </button>)}
-          </div>}
+          {view === "docs" && (
+            <>
+              <SectionHeader title="Docs" description="Markdown bonito, simple y útil. Dos paneles, sin sobrecargar la lectura." action={<><input ref={fileRef} type="file" accept=".md,text/markdown" hidden onChange={importMarkdown} /><button className="secondary-btn" onClick={() => fileRef.current?.click()}>Importar .md</button></>} />
+              <div className="docs-layout-simple">
+                <aside className="card docs-nav-simple">
+                  {docs.map((item) => (
+                    <button key={item.id} className={docId === item.id ? "active" : ""} onClick={() => { setDocId(item.id); setDocRaw(false); }}>
+                      <span>{item.name}</span>
+                      <small>{item.category}</small>
+                    </button>
+                  ))}
+                </aside>
+                <section className="card docs-reader-simple">
+                  <div className="docs-reader-head">
+                    <strong>{docs.find((item) => item.id === docId)?.name ?? "Documento"}</strong>
+                    <div className="tab-switch-simple">
+                      <button className={!docRaw ? "active" : ""} onClick={() => setDocRaw(false)}>Vista</button>
+                      <button className={docRaw ? "active" : ""} onClick={() => setDocRaw(true)}>Markdown</button>
+                    </div>
+                  </div>
+                  {docLoading ? (
+                    <div className="docs-message">Cargando documento…</div>
+                  ) : docError ? (
+                    <div className="docs-message">{docError}</div>
+                  ) : docRaw ? (
+                    <pre className="markdown-source-simple">{docText}</pre>
+                  ) : (
+                    <div className="markdown-body-simple"><ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml>{docText}</ReactMarkdown></div>
+                  )}
+                </section>
+              </div>
+            </>
+          )}
 
-          {section === "Departamentos" && <>
-            <div className="section-intro">Equipos profesionales propuestos. No son agentes activos: su conexión con Crobi se implementará en otra fase.</div>
-            <div className="item-grid">{departments.map((d) => <div className="tile" key={d.name}><span className="tile-icon"><Network size={19}/></span><h3>{d.name}</h3><p>{d.description}</p><span className="pill">Por conectar</span></div>)}</div>
-          </>}
+          {view === "workflows" && (
+            <>
+              <SectionHeader title="Workflows" description="Un solo proceso bien explicado vale más que diez diagramas ruidosos." />
+              <section className="card workflow-card-simple">
+                <Badge tone="blue">WORKFLOW 001</Badge>
+                <h2>Website Change → Verified PR</h2>
+                <p>Solicitud → contexto → ejecución → verificación → aprobación. Ese es el proceso base para ingeniería autónoma.</p>
+                <ol>
+                  <li>Se crea la misión con alcance y criterios de aceptación.</li>
+                  <li>Crobi entrega contexto y permisos al ejecutor.</li>
+                  <li>Claude Code o Codex trabajan en una rama aislada.</li>
+                  <li>Se reúnen pruebas, diff y evidencia.</li>
+                  <li>Tú apruebas antes de fusionar o publicar.</li>
+                </ol>
+              </section>
+            </>
+          )}
 
-          {section === "Proyectos" && <section className="panel">
-            <div className="panel-heading"><h2>Proyectos de {selectedCompany?.name}</h2><span className="count-label">{projects.length} en total</span></div>
-            {projects.length === 0 && <div className="empty-state">No tienes proyectos locales. Crea el primero.</div>}
-            {projects.map((p) => <div className="list-row" key={p.id}><span className="list-icon"><FolderKanban size={16}/></span><span className="list-main"><strong>{p.name}</strong><small>{p.description}</small></span><button className="pill pill-button" onClick={() => changeProject(p.id)} title="Cambiar etapa local">{p.status}</button></div>)}
-          </section>}
+          {view === "results" && (
+            <>
+              <SectionHeader title="Resultados" description="La pantalla sigue existiendo, pero sin dashboards falsos. Solo métricas que luego sí podremos calcular." />
+              <div className="stats-grid-simple">
+                <div className="card stat-card"><span>Misiones verificadas</span><strong>—</strong><small>Necesita datos reales de Crobi</small></div>
+                <div className="card stat-card"><span>Tiempo recuperado</span><strong>—</strong><small>Necesita instrumentación</small></div>
+                <div className="card stat-card"><span>Costo por resultado</span><strong>—</strong><small>Necesita usage ledger</small></div>
+                <div className="card stat-card"><span>Intervenciones evitadas</span><strong>—</strong><small>Necesita comparación real</small></div>
+              </div>
+            </>
+          )}
 
-          {section === "Misiones" && <section className="panel">
-            <div className="panel-heading"><div><h2>Misiones</h2><p>Objetivos preparados. Ninguno ha sido enviado a un ejecutor.</p></div><span className="count-label">{missions.length}</span></div>
-            {missions.length === 0 && <div className="empty-state">No hay misiones creadas.</div>}
-            {missions.map((m) => <div className="list-row" key={m.id}><span className="list-icon"><GitBranch size={16}/></span><span className="list-main"><strong>{m.title}</strong><small>{m.outcome}</small></span><span className="pill">{m.status}</span></div>)}
-          </section>}
-
-          {section === "Docs" && <section className="docs-layout">
-            <div className="docs-sidebar"><div className="sidebar-caption">DOCUMENTOS MARKDOWN</div>{documents.map((d) => <button key={d.id} className={"doc-choice " + (docId === d.id ? "doc-selected" : "")} onClick={() => setDocId(d.id)}><FileText size={16}/><span><strong>{d.title}</strong><small>{d.category}</small></span></button>)}</div>
-            <div className="docs-article"><div className="doc-meta"><BookOpenText size={16}/> Git Markdown · Vista de lectura <span className="pill">Demo</span></div><article className="markdown"><ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown></article></div>
-          </section>}
-
-          {section === "Workflows" && <section className="panel">
-            <div className="panel-heading"><h2>Procesos empresariales</h2><Workflow size={18}/></div>
-            <div className="flowline"><span className="flow-step">Objetivo</span><ArrowRight size={16}/><span className="flow-step">Contexto</span><ArrowRight size={16}/><span className="flow-step">Crobi Run</span><ArrowRight size={16}/><span className="flow-step">Evidencia</span></div>
-            <p className="muted">Esquema del workflow objetivo. Aún no conectado a ejecuciones reales.</p>
-          </section>}
-
-          {section === "Resultados" && <section className="panel"><div className="panel-heading"><h2>Resultados verificables</h2><Activity size={18}/></div><div className="empty-state"><CircleHelp size={24}/><strong>Todavía no hay resultados registrados</strong><span>Solo aparecerán resultados vinculados a evidencia real de ejecución.</span></div></section>}
-
-          {section === "Sistema" && <section className="panel"><div className="panel-heading"><h2>Integraciones</h2><ShieldCheck size={18}/></div>
-            <div className="list-row"><span className="list-icon"><Bot size={16}/></span><span className="list-main"><strong>Crobi Chief</strong><small>Comprobación de disponibilidad de API únicamente</small></span><span className="pill">{status.label}</span></div>
-            <div className="list-row"><span className="list-icon"><BookOpenText size={16}/></span><span className="list-main"><strong>Markdown Docs</strong><small>Lectura local incluida</small></span><span className="pill">Demo</span></div>
-            <p className="muted">No hay credenciales ni agentes configurados. Las conexiones reales requieren autorización y gobierno del lado del servidor.</p>
-          </section>}
-        </div>
-        <footer className="footer"><span>Autonomous Business OS · Starter v0.1</span><span>Powered by a future Crobi integration</span></footer>
+          {view === "systems" && (
+            <>
+              <SectionHeader title="Sistema" description="Runtimes, seguridad y conexión con Crobi. Simplificado a lo esencial." />
+              <section className="card">
+                <div className="system-row-simple"><span>Crobi Control Plane</span><Badge tone={crobi?.connected ? "green" : "amber"}>{crobi?.label ?? "Comprobando"}</Badge></div>
+                <div className="system-row-simple"><span>Claude Code</span><Badge>Sin conectar</Badge></div>
+                <div className="system-row-simple"><span>ChatGPT / Codex</span><Badge>Sin conectar</Badge></div>
+                <div className="system-row-simple"><span>Grok</span><Badge>Sin conectar</Badge></div>
+                <p className="system-note">Esta versión no guarda credenciales en el navegador y no ejecuta acciones externas.</p>
+              </section>
+            </>
+          )}
+        </section>
       </main>
+
+      {mobileOpen && <button className="overlay" aria-label="Cerrar menú" onClick={() => setMobileOpen(false)} />}
+
+      {searchOpen && (
+        <div className="overlay-panel" onClick={(event) => event.target === event.currentTarget && setSearchOpen(false)}>
+          <div className="search-panel">
+            <div className="search-head"><Command size={16} /><input ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar vista, proyecto o misión" /></div>
+            <div className="search-results">
+              <small>Vistas</small>
+              {filteredViews.map((item) => (
+                <button key={item.key} onClick={() => navigate(item.key)}>{item.label}</button>
+              ))}
+              <small>Proyectos</small>
+              {filteredProjects.slice(0, 4).map((item) => (
+                <button key={item.id} onClick={() => navigate("projects")}>{item.name}</button>
+              ))}
+              <small>Misiones</small>
+              {filteredMissions.slice(0, 4).map((item) => (
+                <button key={item.id} onClick={() => navigate("missions")}>{item.title}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modal && (
+        <div className="overlay-panel" onClick={(event) => event.target === event.currentTarget && setModal(null)}>
+          <form className="modal-card-simple" onSubmit={saveModal}>
+            <div className="modal-head-simple">
+              <div>
+                <strong>
+                  {modal === "company" ? "Nueva empresa" : modal === "project" ? "Nuevo proyecto" : "Nueva misión"}
+                </strong>
+                <p>
+                  {modal === "company" ? "Crea un workspace nuevo." : modal === "project" ? "Agrega un proyecto a la empresa actual." : "Define un resultado esperado."}
+                </p>
+              </div>
+              <button type="button" className="icon-btn" onClick={() => setModal(null)}><X size={16} /></button>
+            </div>
+            <label>
+              Nombre
+              <input value={name} onChange={(event) => setName(event.target.value)} placeholder={modal === "mission" ? "Ej. Preparar propuesta comercial" : "Nombre"} />
+            </label>
+            <label>
+              {modal === "mission" ? "Resultado esperado" : "Descripción"}
+              <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={4} />
+            </label>
+            {modal === "mission" && (
+              <>
+                <label>
+                  Proyecto
+                  <select value={projectId} onChange={(event) => setProjectId(event.target.value)}>
+                    <option value="">Sin proyecto</option>
+                    {projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                  </select>
+                </label>
+                <label>
+                  Ejecutador preferido
+                  <select value={assignee} onChange={(event) => setAssignee(event.target.value as Mission["assignee"])}>
+                    {Object.entries(ASSIGNEE_LABEL).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
+                  </select>
+                </label>
+              </>
+            )}
+            <div className="modal-actions-simple">
+              <button type="button" className="secondary-btn" onClick={() => setModal(null)}>Cancelar</button>
+              <button type="submit" className="primary-btn">Guardar</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
