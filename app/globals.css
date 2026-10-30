@@ -492,3 +492,26 @@ button { cursor: pointer; }
   }
   .table-row.table-head { display: none; }
 }
+
+/* Global modules live in the sidebar; company-owned content is scoped within Empresas. */
+.workspace-breadcrumb{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted)}
+.workspace-breadcrumb button{background:none;border:0;padding:0;color:var(--muted)}
+.workspace-breadcrumb button:hover{color:var(--text)}
+.workspace-breadcrumb strong{color:var(--text);font-weight:600}
+.company-tabs{display:flex;align-items:center;gap:22px;overflow-x:auto;border-bottom:1px solid var(--line);margin-top:-7px}
+.company-tabs button{border:0;border-bottom:2px solid transparent;padding:11px 1px 13px;white-space:nowrap;color:var(--muted);background:transparent;font-size:13px}
+.company-tabs button.active{border-color:var(--accent);color:var(--text);font-weight:650}
+.company-tabs button:hover{color:var(--text)}
+.company-overview-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.company-overview-strip button{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:16px;text-align:left;padding:17px;display:grid;gap:8px}
+.company-overview-strip button:hover{border-color:var(--accent);background:var(--panel-2)}
+.company-overview-strip button span{color:var(--muted)}
+.company-overview-strip button strong{font-size:28px;font-weight:630}
+.company-overview-strip button small{color:var(--accent)}
+.docs-group-label{font-size:10.5px;font-weight:650;letter-spacing:.065em;color:var(--muted);padding:10px 4px 2px}
+.docs-none{color:var(--muted);font-size:12px;padding:0 6px}
+.workflow-reuse-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;border-top:1px solid var(--line);padding-top:16px;margin-top:20px;font-size:12px;color:var(--muted)}
+.workflow-reuse-bar strong{color:var(--text)}
+.table-row-link{width:100%;border-left:0;border-right:0;border-top:0;border-radius:0;background:transparent;color:inherit;text-align:left}
+.table-row-link:hover{background:var(--panel-2)}
+@media(max-width:640px){.company-overview-strip{grid-template-columns:1fr}.company-tabs{gap:16px}.workflow-reuse-bar{align-items:stretch;flex-direction:column}}

@@ -30,14 +30,19 @@ const STORAGE_KEY = "autonomous-os-simple-ui-v1";
 const NAV: { key: View; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "now", label: "Ahora", icon: LayoutDashboard },
   { key: "companies", label: "Empresas", icon: Building2 },
-  { key: "departments", label: "Departamentos", icon: Network },
-  { key: "projects", label: "Proyectos", icon: FolderKanban },
-  { key: "missions", label: "Misiones", icon: Bot },
-  { key: "docs", label: "Docs", icon: BookOpen },
   { key: "workflows", label: "Workflows", icon: Workflow },
   { key: "results", label: "Resultados", icon: Activity },
   { key: "systems", label: "Sistema", icon: Settings2 },
 ];
+
+const COMPANY_TABS: { key: View; label: string; icon: typeof LayoutDashboard }[] = [
+  { key: "company", label: "Resumen", icon: Building2 },
+  { key: "projects", label: "Proyectos", icon: FolderKanban },
+  { key: "missions", label: "Misiones", icon: Bot },
+  { key: "docs", label: "Docs", icon: BookOpen },
+  { key: "departments", label: "Departamentos", icon: Network },
+];
+const COMPANY_VIEWS: View[] = COMPANY_TABS.map(item => item.key);
 
 const STAGE_LABEL: Record<Project["stage"], string> = {
   idea: "Idea",
@@ -166,28 +171,6 @@ export function OperatingConsole() {
       .catch(() => setCrobi({ connected: false, configured: false, label: "Sin conexión" }));
   }, []);
 
-  useEffect(() => {
-    const localDoc = store.localDocs.find((d) => d.id === docId);
-    if (localDoc) {
-      setDocText(localDoc.content);
-      setDocError("");
-      setDocLoading(false);
-      return;
-    }
-    setDocLoading(true);
-    setDocError("");
-    fetch(`/api/docs?id=${encodeURIComponent(docId)}`)
-      .then(async (r) => {
-        if (!r.ok) throw new Error("Not available");
-        return r.json();
-      })
-      .then((j: { source: string }) => setDocText(j.source))
-      .catch(() => {
-        setDocText("");
-        setDocError("No fue posible cargar este documento.");
-      })
-      .finally(() => setDocLoading(false));
-  }, [docId, store.localDocs]);
 
   const companies = useMemo(() => [...demoCompanies, ...store.companies], [store.companies]);
   const company = companies.find((c) => c.id === companyId) ?? companies[0];
@@ -206,16 +189,60 @@ export function OperatingConsole() {
       .map((item) => ({ id: item.id, name: item.name, path: `${item.name}.md`, companyId: item.companyId, category: "Importados" })),
   ];
 
-  const openProjects = projects.filter((item) => item.stage === "active" || item.stage === "planning").length;
-  const assignedMissions = missions.filter((item) => item.assignee !== "unassigned").length;
-  const filteredViews = NAV.filter((item) => item.label.toLowerCase().includes(query.toLowerCase().trim()));
-  const filteredProjects = projects.filter((item) => `${item.name} ${item.description}`.toLowerCase().includes(query.toLowerCase()));
-  const filteredMissions = missions.filter((item) => `${item.title} ${item.outcome}`.toLowerCase().includes(query.toLowerCase()));
+  // Company-owned docs are filtered separately from deliberately shared docs.
+  const companyDocs = docs.filter(item => item.companyId === company?.id);
+  const sharedDocs = docs.filter(item => item.companyId === "all");
+  const effectiveDocId = docs.some(item => item.id === docId) ? docId : (companyDocs[0]?.id ?? sharedDocs[0]?.id ?? "overview");
+  const allProjects = [...(demoMode ? demoProjects : []), ...store.projects];
+  const allMissions = [...(demoMode ? demoMissions : []), ...store.missions];
+  const globalOpenProjects = allProjects.filter(item => item.stage === "active" || item.stage === "planning").length;
+  const globalAssignedMissions = allMissions.filter(item => item.assignee !== "unassigned").length;
+  const filteredViews = [...NAV, ...COMPANY_TABS].filter(item => item.label.toLowerCase().includes(query.toLowerCase().trim()));
+  const filteredProjects = allProjects.filter(item => `${item.name} ${item.description}`.toLowerCase().includes(query.toLowerCase()));
+  const filteredMissions = allMissions.filter(item => `${item.title} ${item.outcome}`.toLowerCase().includes(query.toLowerCase()));
+
+  useEffect(() => {
+    let active = true;
+    const localDoc = store.localDocs.find(d => d.id === effectiveDocId && d.companyId === company?.id);
+    setDocText("");
+    setDocError("");
+    if (localDoc) { setDocText(localDoc.content); setDocLoading(false); return; }
+    setDocLoading(true);
+    fetch(`/api/docs?slug=${encodeURIComponent(effectiveDocId)}`)
+      .then(async r => { if (!r.ok) throw Error("Document unavailable"); return r.json(); })
+      .then((result: { content: string }) => { if (active) setDocText(result.content); })
+      .catch(() => { if (active) setDocError("No fue posible cargar este documento."); })
+      .finally(() => { if (active) setDocLoading(false); });
+    return () => { active = false; };
+  }, [effectiveDocId, company?.id, store.localDocs]);
 
   function navigate(next: View) {
     setView(next);
     setSearchOpen(false);
     setMobileOpen(false);
+  }
+
+  function openCompany(id: string, next: View = "company") {
+    setCompanyId(id);
+    setView(next);
+    setCompanyOpen(false);
+    setSearchOpen(false);
+    setMobileOpen(false);
+  }
+
+  function useWebsiteWorkflow() {
+    if (!company) return;
+    const mission: Mission = {
+      id: uid(),
+      companyId: company.id,
+      title: "Cambio web con PR verificado",
+      outcome: "Solicitud, cambio aislado, pruebas, revisión y aprobación humana antes de publicar",
+      assignee: "claude",
+      status: "local_draft",
+      createdAt: new Date().toISOString(),
+    };
+    setStore(current => ({ ...current, missions: [...current.missions, mission] }));
+    navigate("missions");
   }
 
   function openModal(kind: "company" | "project" | "mission") {
@@ -241,7 +268,7 @@ export function OperatingConsole() {
       };
       setStore((current) => ({ ...current, companies: [...current.companies, next] }));
       setCompanyId(next.id);
-      setView("companies");
+      setView("company");
     }
 
     if (modal === "project") {
@@ -303,8 +330,9 @@ export function OperatingConsole() {
     event.target.value = "";
   }
 
-  const focusMission = filteredMissions[0] ?? missions[0];
-  const focusProject = filteredProjects[0] ?? projects[0];
+  const focusMission = allMissions.find(item => !item.demo) ?? allMissions[0];
+  const focusCompany = companies.find(item => item.id === focusMission?.companyId);
+  const activeGlobalView = COMPANY_VIEWS.includes(view) ? "companies" : view;
 
   return (
     <div className="simple-shell">
@@ -332,9 +360,7 @@ export function OperatingConsole() {
                 key={item.id}
                 className={`company-option ${item.id === company?.id ? "active" : ""}`}
                 onClick={() => {
-                  setCompanyId(item.id);
-                  setCompanyOpen(false);
-                  setMobileOpen(false);
+                  openCompany(item.id);
                 }}
               >
                 <span>{item.short}</span>
@@ -351,7 +377,7 @@ export function OperatingConsole() {
           {NAV.map((item) => {
             const Icon = item.icon;
             return (
-              <button key={item.key} className={view === item.key ? "active" : ""} onClick={() => navigate(item.key)}>
+              <button key={item.key} className={activeGlobalView === item.key ? "active" : ""} onClick={() => navigate(item.key)}>
                 <Icon size={17} />
                 <span>{item.label}</span>
               </button>
@@ -382,62 +408,73 @@ export function OperatingConsole() {
             <kbd>⌘K</kbd>
           </button>
           <div className="topbar-actions">
-            <button className="secondary-btn" onClick={() => openModal("project")}>Proyecto</button>
-            <button className="primary-btn" onClick={() => openModal("mission")}>Nueva misión</button>
+            {COMPANY_VIEWS.includes(view)
+              ? <button className="primary-btn" onClick={() => openModal("mission")}>Nueva misión</button>
+              : <button className="secondary-btn" onClick={() => navigate("companies")}>Explorar empresas</button>}
           </div>
         </header>
 
         <section className="simple-content">
+          {COMPANY_VIEWS.includes(view) && (
+            <>
+              <div className="workspace-breadcrumb">
+                <button onClick={() => navigate("companies")}>Empresas</button><span>/</span><strong>{company?.name}</strong>
+              </div>
+              <nav className="company-tabs" aria-label="Secciones de la empresa">
+                {COMPANY_TABS.map(tab => (
+                  <button key={tab.key} className={view === tab.key ? "active" : ""} onClick={() => navigate(tab.key)}>{tab.label}</button>
+                ))}
+              </nav>
+            </>
+          )}
           {view === "now" && (
             <>
               <SectionHeader
                 title="Ahora"
-                description="Una vista simple para decidir, no para administrar 50 tarjetas. Enfócate en lo siguiente y supervisa por excepción."
+                description="Vista global. Entra a una empresa para ver sus proyectos, misiones y documentos."
               />
 
               <div className="focus-grid">
                 <section className="card focus-card">
-                  <div className="card-topline">Siguiente decisión</div>
+                  <div className="card-topline">Misión por preparar · No es una aprobación pendiente</div>
                   <h2>{focusMission?.title ?? "Aún no hay misiones"}</h2>
                   <p>{focusMission?.outcome ?? "Crea una misión para definir el siguiente resultado esperado."}</p>
                   <div className="focus-meta">
-                    <Badge tone="blue">{focusMission ? ASSIGNEE_LABEL[focusMission.assignee] : "Sin asignar"}</Badge>
+                    <Badge tone="blue">{focusCompany?.name ?? "Sin empresa"}</Badge>
+                    <Badge>{focusMission ? ASSIGNEE_LABEL[focusMission.assignee] : "Sin asignar"}</Badge>
                     <Badge tone={focusMission?.demo ? "amber" : "default"}>{focusMission?.demo ? "Ejemplo" : "Borrador local"}</Badge>
                   </div>
                   <div className="focus-actions">
-                    <button className="primary-btn" onClick={() => navigate("missions")}>Ver misiones</button>
-                    <button className="secondary-btn" onClick={() => navigate("docs")}>Abrir docs</button>
+                    <button className="primary-btn" onClick={() => focusCompany ? openCompany(focusCompany.id, "missions") : navigate("companies")}>Ver misión en su empresa</button>
+                    <button className="secondary-btn" onClick={() => navigate("companies")}>Abrir empresas</button>
                   </div>
                 </section>
 
                 <section className="card summary-card">
-                  <div className="summary-row"><span>Proyectos abiertos</span><strong>{openProjects}</strong></div>
-                  <div className="summary-row"><span>Misiones asignadas</span><strong>{assignedMissions}</strong></div>
-                  <div className="summary-row"><span>Estado Crobi</span><strong>{crobi?.connected ? "Conectado" : "No conectado"}</strong></div>
-                  <div className="summary-row"><span>Docs disponibles</span><strong>{docs.length}</strong></div>
+                  <div className="summary-row"><span>Empresas</span><strong>{companies.length}</strong></div>
+                  <div className="summary-row"><span>Proyectos abiertos</span><strong>{globalOpenProjects}</strong></div>
+                  <div className="summary-row"><span>Misiones asignadas</span><strong>{globalAssignedMissions}</strong></div>
+                  <div className="summary-row"><span>Crobi</span><strong>{crobi?.connected ? "Conectado" : "No conectado"}</strong></div>
                 </section>
               </div>
 
               <div className="two-panel-grid">
                 <section className="card">
                   <div className="block-heading">
-                    <h3>Proyectos</h3>
-                    <button className="text-btn" onClick={() => navigate("projects")}>Ver todos</button>
+                    <h3>Proyectos por empresa</h3>
+                    <button className="text-btn" onClick={() => navigate("companies")}>Ver empresas</button>
                   </div>
-                  {projects.length === 0 ? (
-                    <EmptyState title="Sin proyectos" description="Crea un proyecto para empezar a organizar trabajo con contexto." action={<button className="secondary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
+                  {allProjects.length === 0 ? (
+                    <EmptyState title="Sin proyectos" description="Abre una empresa y crea un proyecto." action={<button className="secondary-btn" onClick={() => navigate("companies")}>Abrir empresas</button>} />
                   ) : (
                     <div className="simple-table">
-                      <div className="table-row table-head"><span>Proyecto</span><span>Estado</span><span>Origen</span></div>
-                      {projects.slice(0, 4).map((item) => (
-                        <div className="table-row" key={item.id}>
-                          <div>
-                            <strong>{item.name}</strong>
-                            <small>{item.description}</small>
-                          </div>
+                      <div className="table-row table-head"><span>Proyecto</span><span>Empresa</span><span>Estado</span></div>
+                      {allProjects.slice(0, 4).map(item => (
+                        <button className="table-row table-row-link" key={item.id} onClick={() => openCompany(item.companyId, "projects")}>
+                          <div><strong>{item.name}</strong><small>{item.description}</small></div>
+                          <span>{companies.find(c => c.id === item.companyId)?.name ?? "Empresa"}</span>
                           <Badge>{STAGE_LABEL[item.stage]}</Badge>
-                          <span className="muted-inline">{item.demo ? "Demo" : "Local"}</span>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -448,9 +485,9 @@ export function OperatingConsole() {
                     <h3>Atajos</h3>
                   </div>
                   <div className="shortcut-list">
-                    <button onClick={() => navigate("docs")}>Abrir base de conocimiento</button>
-                    <button onClick={() => navigate("systems")}>Revisar runtimes y conexión</button>
-                    <button onClick={() => navigate("workflows")}>Ver workflow activo</button>
+                    <button onClick={() => navigate("companies")}>Abrir una empresa</button>
+                    <button onClick={() => navigate("workflows")}>Workflows reutilizables</button>
+                    <button onClick={() => navigate("systems")}>Revisar conexión con Crobi</button>
                     <button onClick={() => openModal("company")}>Crear nueva empresa</button>
                   </div>
                 </section>
@@ -460,10 +497,10 @@ export function OperatingConsole() {
 
           {view === "companies" && (
             <>
-              <SectionHeader title="Empresas" description="Cada negocio vive en su propio workspace. Menos ruido, mismo poder." action={<button className="primary-btn" onClick={() => openModal("company")}>Nueva empresa</button>} />
+              <SectionHeader title="Empresas" description="Cada empresa contiene sus proyectos, misiones, documentos y departamentos. Los workflows se comparten." action={<button className="primary-btn" onClick={() => openModal("company")}>Nueva empresa</button>} />
               <div className="stack-list">
                 {companies.map((item) => (
-                  <button key={item.id} className={`stack-item ${item.id === company?.id ? "selected" : ""}`} onClick={() => setCompanyId(item.id)}>
+                  <button key={item.id} className={`stack-item ${item.id === company?.id ? "selected" : ""}`} onClick={() => openCompany(item.id)}>
                     <div className="stack-item-main">
                       <span className="avatar-box">{item.short}</span>
                       <div>
@@ -478,9 +515,32 @@ export function OperatingConsole() {
             </>
           )}
 
+          {view === "company" && (
+            <>
+              <SectionHeader title={company?.name ?? "Empresa"} description={company?.description || "Workspace de empresa con sus propios datos."} />
+              <div className="company-overview-strip">
+                <button onClick={() => navigate("projects")}><span>Proyectos</span><strong>{projects.length}</strong><small>Ver proyectos</small></button>
+                <button onClick={() => navigate("missions")}><span>Misiones</span><strong>{missions.length}</strong><small>Ver misiones</small></button>
+                <button onClick={() => navigate("docs")}><span>Docs propios</span><strong>{companyDocs.length}</strong><small>{sharedDocs.length} compartidos adicionales</small></button>
+              </div>
+              <section className="card">
+                <div className="block-heading"><h3>Proyectos de {company?.name}</h3><button className="text-btn" onClick={() => navigate("projects")}>Ver todos</button></div>
+                {projects.length === 0
+                  ? <EmptyState title="Sin proyectos" description="Crea un proyecto dentro de este negocio." action={<button className="secondary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
+                  : <div className="simple-table">
+                      <div className="table-row table-head"><span>Proyecto</span><span>Estado</span><span>Origen</span></div>
+                      {projects.slice(0,5).map(item => <div className="table-row" key={item.id}>
+                        <div><strong>{item.name}</strong><small>{item.description}</small></div>
+                        <Badge>{STAGE_LABEL[item.stage]}</Badge><span className="muted-inline">{item.demo ? "Demo" : "Local"}</span>
+                      </div>)}
+                    </div>}
+              </section>
+            </>
+          )}
+
           {view === "departments" && (
             <>
-              <SectionHeader title="Departamentos" description="Mantengo la capacidad, pero la presento como una lista clara de responsabilidades." />
+              <SectionHeader title="Departamentos" description={`Departamentos propuestos de ${company?.name}. Aún sin ejecución real.`} />
               <div className="card">
                 <div className="simple-table">
                   <div className="table-row table-head"><span>Departamento</span><span>Responsabilidad</span></div>
@@ -494,7 +554,7 @@ export function OperatingConsole() {
 
           {view === "projects" && (
             <>
-              <SectionHeader title="Proyectos" description="Tabla clara primero, detalles después. Menos tarjetas, misma información." action={<button className="primary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
+              <SectionHeader title="Proyectos" description={`Proyectos exclusivos de ${company?.name}.`} action={<button className="primary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
               <section className="card">
                 {projects.length === 0 ? (
                   <EmptyState title="Sin proyectos" description="Agrega un proyecto para empezar a agrupar documentos y misiones." action={<button className="secondary-btn" onClick={() => openModal("project")}>Crear proyecto</button>} />
@@ -525,7 +585,7 @@ export function OperatingConsole() {
 
           {view === "missions" && (
             <>
-              <SectionHeader title="Misiones" description="Piensa en resultados esperados, no en tareas sueltas. Esta vista se queda limpia y supervisable." action={<button className="primary-btn" onClick={() => openModal("mission")}>Nueva misión</button>} />
+              <SectionHeader title="Misiones" description={`Misiones y borradores de ${company?.name}. Aún no ejecutan agentes.`} action={<button className="primary-btn" onClick={() => openModal("mission")}>Nueva misión</button>} />
               <section className="card">
                 {missions.length === 0 ? (
                   <EmptyState title="Sin misiones" description="Describe qué resultado quieres obtener para esta empresa." action={<button className="secondary-btn" onClick={() => openModal("mission")}>Crear misión</button>} />
@@ -550,19 +610,25 @@ export function OperatingConsole() {
 
           {view === "docs" && (
             <>
-              <SectionHeader title="Docs" description="Markdown bonito, simple y útil. Dos paneles, sin sobrecargar la lectura." action={<><input ref={fileRef} type="file" accept=".md,text/markdown" hidden onChange={importMarkdown} /><button className="secondary-btn" onClick={() => fileRef.current?.click()}>Importar .md</button></>} />
+              <SectionHeader title="Docs" description={`Documentos de ${company?.name}, más documentos compartidos. Los importados siguen siendo locales.`} action={<><input ref={fileRef} type="file" accept=".md,text/markdown" hidden onChange={importMarkdown} /><button className="secondary-btn" onClick={() => fileRef.current?.click()}>Importar .md</button></>} />
               <div className="docs-layout-simple">
                 <aside className="card docs-nav-simple">
-                  {docs.map((item) => (
-                    <button key={item.id} className={docId === item.id ? "active" : ""} onClick={() => { setDocId(item.id); setDocRaw(false); }}>
-                      <span>{item.name}</span>
-                      <small>{item.category}</small>
+                  <div className="docs-group-label">DE {company?.name?.toUpperCase()}</div>
+                  {companyDocs.length ? companyDocs.map(item => (
+                    <button key={item.id} className={effectiveDocId === item.id ? "active" : ""} onClick={() => {setDocId(item.id);setDocRaw(false);}}>
+                      <span>{item.name}</span><small>Solo esta empresa · {item.category}</small>
+                    </button>
+                  )) : <p className="docs-none">Sin documentos propios todavía.</p>}
+                  <div className="docs-group-label">COMPARTIDOS</div>
+                  {sharedDocs.map(item => (
+                    <button key={item.id} className={effectiveDocId === item.id ? "active" : ""} onClick={() => {setDocId(item.id);setDocRaw(false);}}>
+                      <span>{item.name}</span><small>Disponible en todas las empresas</small>
                     </button>
                   ))}
                 </aside>
                 <section className="card docs-reader-simple">
                   <div className="docs-reader-head">
-                    <strong>{docs.find((item) => item.id === docId)?.name ?? "Documento"}</strong>
+                    <strong>{docs.find((item) => item.id === effectiveDocId)?.name ?? "Documento"}</strong>
                     <div className="tab-switch-simple">
                       <button className={!docRaw ? "active" : ""} onClick={() => setDocRaw(false)}>Vista</button>
                       <button className={docRaw ? "active" : ""} onClick={() => setDocRaw(true)}>Markdown</button>
@@ -584,7 +650,7 @@ export function OperatingConsole() {
 
           {view === "workflows" && (
             <>
-              <SectionHeader title="Workflows" description="Un solo proceso bien explicado vale más que diez diagramas ruidosos." />
+              <SectionHeader title="Workflows" description="Biblioteca global de procesos reutilizables. Al aplicar una plantilla, el resultado pertenece a una empresa." />
               <section className="card workflow-card-simple">
                 <Badge tone="blue">WORKFLOW 001</Badge>
                 <h2>Website Change → Verified PR</h2>
@@ -596,13 +662,14 @@ export function OperatingConsole() {
                   <li>Se reúnen pruebas, diff y evidencia.</li>
                   <li>Tú apruebas antes de fusionar o publicar.</li>
                 </ol>
+                <div className="workflow-reuse-bar"><span>Plantilla global · Crear borrador para <strong>{company?.name}</strong></span><button className="primary-btn" onClick={useWebsiteWorkflow}>Usar en esta empresa</button></div>
               </section>
             </>
           )}
 
           {view === "results" && (
             <>
-              <SectionHeader title="Resultados" description="La pantalla sigue existiendo, pero sin dashboards falsos. Solo métricas que luego sí podremos calcular." />
+              <SectionHeader title="Resultados" description="Métricas globales verificadas entre empresas, sin cifras inventadas." />
               <div className="stats-grid-simple">
                 <div className="card stat-card"><span>Misiones verificadas</span><strong>—</strong><small>Necesita datos reales de Crobi</small></div>
                 <div className="card stat-card"><span>Tiempo recuperado</span><strong>—</strong><small>Necesita instrumentación</small></div>
@@ -635,16 +702,16 @@ export function OperatingConsole() {
             <div className="search-head"><Command size={16} /><input ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar vista, proyecto o misión" /></div>
             <div className="search-results">
               <small>Vistas</small>
-              {filteredViews.map((item) => (
-                <button key={item.key} onClick={() => navigate(item.key)}>{item.label}</button>
+              {filteredViews.map(item => (
+                <button key={item.key} onClick={() => navigate(item.key)}>{COMPANY_VIEWS.includes(item.key) ? `Empresas / ${item.label}` : item.label}</button>
               ))}
               <small>Proyectos</small>
-              {filteredProjects.slice(0, 4).map((item) => (
-                <button key={item.id} onClick={() => navigate("projects")}>{item.name}</button>
+              {filteredProjects.slice(0, 4).map(item => (
+                <button key={item.id} onClick={() => openCompany(item.companyId, "projects")}>{item.name} · {companies.find(c=>c.id===item.companyId)?.name}</button>
               ))}
               <small>Misiones</small>
-              {filteredMissions.slice(0, 4).map((item) => (
-                <button key={item.id} onClick={() => navigate("missions")}>{item.title}</button>
+              {filteredMissions.slice(0, 4).map(item => (
+                <button key={item.id} onClick={() => openCompany(item.companyId, "missions")}>{item.title} · {companies.find(c=>c.id===item.companyId)?.name}</button>
               ))}
             </div>
           </div>
