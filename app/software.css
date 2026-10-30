@@ -252,3 +252,35 @@
   .sana-shell .sw-source-window{align-self:flex-start;}
   .sana-shell .sw-phase-meta{flex-direction:column;align-items:flex-start;}
 }
+
+
+/* Source-backed milestone review — static, readable, no excessive motion. */
+.sana-shell .sw-milestone-evidence{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:4px 0 7px;font-size:10px;line-height:1.5;color:#8a858e;}
+.sana-shell .sw-milestone-evidence>span:nth-child(2){flex:1 1 100%;color:#77717c;}
+.sana-shell .sw-evidence-label{display:inline-flex;align-items:center;width:max-content;border-radius:5px;padding:4px 7px;font-size:9px;font-weight:700;}
+.sana-shell .sw-evidence-accepted{background:#e2f3e9;color:#428261;}
+.sana-shell .sw-evidence-staging{background:#e7eef9;color:#526f9e;}
+.sana-shell .sw-evidence-implemented{background:#f1ecf9;color:#7c61a0;}
+.sana-shell .sw-evidence-pending{background:#fff2df;color:#aa7b3b;}
+.sana-shell .sw-milestone-evidence a{display:inline-flex;align-items:center;gap:5px;color:#70618b;text-decoration:underline;text-underline-offset:2px;font-size:10px;}
+.sana-shell .sw-repo-review{border-color:#e5dfec;}
+.sana-shell .sw-review-summary{font-size:12px;color:#655d6c;line-height:1.7;margin:0 0 16px;}
+.sana-shell .sw-review-links{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:0 0 17px;}
+.sana-shell .sw-review-links a{display:inline-flex;align-items:center;gap:7px;padding:9px 11px;border:1px solid #e9e4ee;border-radius:9px;background:#f7f5fa;font-size:10.5px;color:#66557d;font-weight:610;}
+.sana-shell .sw-review-links a:hover{background:#eeeaf3;}
+.sana-shell .sw-review-metadata{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0 0 18px;}
+.sana-shell .sw-review-metadata>div{display:grid;gap:6px;background:#f9f8fa;border:1px solid #f0edf1;border-radius:9px;padding:11px;min-width:0;}
+.sana-shell .sw-review-metadata>div span{font-size:9.5px;color:#a5a0aa;}
+.sana-shell .sw-review-metadata>div strong,.sana-shell .sw-review-metadata>div code{font-size:11px;color:#585160;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sana-shell .sw-review-subtitle{font-size:11.5px;font-weight:670;margin:17px 0 9px;color:#514c55;}
+.sana-shell .sw-review-findings,.sana-shell .sw-review-blockers{padding-left:19px;display:grid;gap:9px;margin:0;font-size:10.5px;line-height:1.65;color:#77717b;}
+.sana-shell .sw-review-findings li::marker{color:#6f9b86;}
+.sana-shell .sw-review-blockers li::marker{color:#c59a6e;}
+.sana-shell.theme-dark .sw-review-summary,.sana-shell.theme-dark .sw-review-findings,.sana-shell.theme-dark .sw-review-blockers,.sana-shell.theme-dark .sw-milestone-evidence>span:nth-child(2){color:#c8c0cf;}
+.sana-shell.theme-dark .sw-review-subtitle{color:#ebe5ee;}
+.sana-shell.theme-dark .sw-review-links a,.sana-shell.theme-dark .sw-review-metadata>div{background:#332e38;border-color:#4a4252;color:#d9cced;}
+.sana-shell.theme-dark .sw-review-metadata>div strong,.sana-shell.theme-dark .sw-review-metadata>div code{color:#e8e1ec;}
+.sana-shell.theme-dark .sw-evidence-accepted{background:#294834;color:#b4e6ca;}
+.sana-shell.theme-dark .sw-evidence-staging{background:#2b3d51;color:#b6d0ee;}
+.sana-shell.theme-dark .sw-evidence-pending{background:#4a3b27;color:#e9ca94;}
+@media(max-width:620px){.sana-shell .sw-review-metadata{grid-template-columns:minmax(0,1fr);}}

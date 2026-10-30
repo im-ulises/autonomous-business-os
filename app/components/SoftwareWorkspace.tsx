@@ -226,6 +226,15 @@ export function SoftwareWorkspace({ company, projects, clients, onCreate, onUpda
                         <div className="sw-milestone-fields">
                           <input className={milestone.done ? "is-complete" : ""} value={milestone.title} aria-label="Nombre del hito" maxLength={160} onChange={event => patchMilestone(phase, milestone.id, { title: event.target.value })}/>
                           <input value={milestone.deliverable} aria-label="Entregable o evidencia del hito" maxLength={250} placeholder="Entregable, evidencia o condición de aceptación..." onChange={event => patchMilestone(phase, milestone.id, { deliverable: event.target.value })}/>
+                          {milestone.verification && <div className="sw-milestone-evidence">
+                            <span className={"sw-evidence-label sw-evidence-" + milestone.verification.level}>
+                              {milestone.verification.level === "accepted" ? "Aceptado / documentado" :
+                                milestone.verification.level === "staging" ? "Verificado en staging" :
+                                milestone.verification.level === "implemented" ? "Implementado en código" : "Pendiente de validar"}
+                            </span>
+                            <span>{milestone.verification.summary}</span>
+                            {safeLink(milestone.verification.url ?? "") && <a onClick={event => event.stopPropagation()} href={safeLink(milestone.verification.url ?? "")} target="_blank" rel="noopener noreferrer">Ver evidencia <ExternalLink size={12}/></a>}
+                          </div>}
                         </div>
                         <button className="sw-milestone-remove" aria-label={"Eliminar hito " + milestone.title} onClick={() => removeMilestone(phase, milestone.id)}><Trash2 size={14}/></button>
                       </div>)}
@@ -248,6 +257,26 @@ export function SoftwareWorkspace({ company, projects, clients, onCreate, onUpda
               <div><button type="button" className="sw-outline" onClick={() => { setAddingPhase(false); setPhaseTitle(""); }}>Cancelar</button><button type="submit" disabled={!phaseTitle.trim()} className="sw-action">Agregar fase <Plus size={14}/></button></div>
             </form>}
           </section>
+          {current.repositoryReview && <section className="sw-panel sw-repo-review">
+            <div className="sw-panel-head">
+              <div><span className="sw-overline">VERIFICACIÓN DEL REPOSITORIO · {current.repositoryReview.reviewedAt}</span><h2>Estado respaldado por evidencia</h2><p>Fotografía puntual de GitHub y Railway, no sincronización continua.</p></div>
+            </div>
+            <p className="sw-review-summary">{current.repositoryReview.summary}</p>
+            <div className="sw-review-links">
+              <a href={safeLink(current.repoUrl)} target="_blank" rel="noopener noreferrer"><GitBranch size={14}/> Repositorio <ExternalLink size={12}/></a>
+              <a href={safeLink(current.repositoryReview.stagingUrl)} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/> Abrir staging</a>
+            </div>
+            <div className="sw-review-metadata">
+              <div><span>Rama desplegada / revisada</span><strong>{current.repositoryReview.repositoryBranch}</strong></div>
+              <div><span>Commit de revisión</span><code>{current.repositoryReview.repositoryCommit.slice(0, 12)}</code></div>
+              <div><span>Railway API</span><code>{current.repositoryReview.apiDeployment.slice(0, 8)}</code></div>
+              <div><span>Railway Web</span><code>{current.repositoryReview.webDeployment.slice(0, 8)}</code></div>
+            </div>
+            <h3 className="sw-review-subtitle">Hallazgos verificados</h3>
+            <ul className="sw-review-findings">{current.repositoryReview.findings.map((finding,i) => <li key={i}>{finding}</li>)}</ul>
+            <h3 className="sw-review-subtitle">Pendientes y riesgos abiertos</h3>
+            <ul className="sw-review-blockers">{current.repositoryReview.blockers.map((blocker,i) => <li key={i}>{blocker}</li>)}</ul>
+          </section>}
           <section className="sw-panel">
             <div className="sw-panel-head"><div><span className="sw-overline">SEGUIMIENTO</span><h2>Últimos acuerdos y contexto</h2><p>Notas editables para continuar donde quedó el equipo.</p></div></div>
             <MetaField label="Notas de proyecto"><textarea value={current.notes} onChange={event => onUpdate(current.id, { notes: event.target.value })} rows={5} placeholder="Última reunión, decisiones, blockers, cambios de alcance..."/></MetaField>

@@ -1,4 +1,5 @@
 import type { Client, SoftwareMilestone, SoftwarePhase, SoftwareProject } from "@/lib/types";
+import { applyBosurRepositoryReview } from "@/lib/bosur-review";
 
 /**
  * Faithful, editable starter snapshot of the customer-facing
@@ -264,9 +265,24 @@ export function ensureBosurWorkspace<T extends { clients: Client[]; softwareProj
     ? current.clients
     : [...current.clients, BOSUR_CLIENT];
   const linkedId = existingClient?.id ?? BOSUR_CLIENT_ID;
-  const softwareProjects = current.softwareProjects.some(project =>
-    project.id === BOSUR_PROJECT_ID || (project.companyId === "evo" && project.name.trim().toLowerCase() === "bosur operations")
-  ) ? current.softwareProjects
-    : [{ ...BOSUR_SOFTWARE_PROJECT, clientId: linkedId }, ...current.softwareProjects];
-  return { ...current, clients, softwareProjects };
+  const old = current.softwareProjects.find(project =>
+    project.id === BOSUR_PROJECT_ID ||
+    (project.companyId === "evo" && project.name.trim().toLowerCase() === "bosur operations")
+  );
+  if (!old) {
+    return {
+      ...current, clients,
+      softwareProjects: [applyBosurRepositoryReview({ ...BOSUR_SOFTWARE_PROJECT, clientId: linkedId }), ...current.softwareProjects],
+    };
+  }
+  if (old.repositoryReview?.version === "bosur-repo-audit-2026-10-30-v1") {
+    return { ...current, clients };
+  }
+  const reviewed = applyBosurRepositoryReview({ ...old, clientId: old.clientId || linkedId });
+  return {
+    ...current, clients,
+    softwareProjects: current.softwareProjects.map(project =>
+      project === old ? { ...reviewed, updatedAt: new Date().toISOString() } : project
+    ),
+  };
 }
