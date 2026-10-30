@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import {
   Activity,
   BookOpen,
+  FileText,
   Palette,
   Bot,
   Building2,
@@ -33,11 +34,12 @@ import { demoClients, demoCompanies, demoMissions, demoProjects, sampleDocs } fr
 import { ProjectManager } from "@/app/components/ProjectManager";
 import { SoftwareWorkspace } from "@/app/components/SoftwareWorkspace";
 import { DepartmentWorkspace } from "@/app/components/DepartmentWorkspace";
+import { ProposalWorkspace } from "@/app/components/ProposalWorkspace";
 import { ensureBosurWorkspace } from "@/lib/bosur-plan";
 import { CompanyBrandSection } from "@/app/components/CompanyBrandSection";
-import type { BrandGuide, Client, Company, DepartmentContext, LocalDoc, Mission, Project, ProjectDetails, SoftwareProject, Store, View } from "@/lib/types";
+import type { BrandGuide, Client, Company, DepartmentContext, LocalDoc, Mission, Project, ProjectDetails, ProposalDocument, ProposalTemplate, SoftwareProject, Store, View } from "@/lib/types";
 
-const INITIAL: Store = { companies: [], projects: [], missions: [], localDocs: [], clients: [], projectDetails: {}, companyBrandGuides: {}, softwareProjects: [], departmentContexts: [] };
+const INITIAL: Store = { companies: [], projects: [], missions: [], localDocs: [], clients: [], projectDetails: {}, companyBrandGuides: {}, softwareProjects: [], departmentContexts: [], proposals: [], proposalTemplates: [] };
 const STORAGE_KEY = "autonomous-os-simple-ui-v1";
 type ProjectResumeNote = { text: string; savedAt: string };
 
@@ -57,6 +59,7 @@ const COMPANY_TABS: { key: View; label: string; icon: typeof LayoutDashboard }[]
   { key: "docs", label: "Docs", icon: BookOpen },
   { key: "brand", label: "Brand Sheet", icon: Palette },
   { key: "departments", label: "Departamentos", icon: Network },
+  { key: "proposals", label: "Cotizador", icon: FileText },
 ];
 const COMPANY_VIEWS: View[] = COMPANY_TABS.map(item => item.key);
 
@@ -157,7 +160,7 @@ export function OperatingConsole() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { store?: Partial<Store>; demoMode?: boolean; companyId?: string; theme?: "light" | "dark"; resumeNotes?: Record<string, ProjectResumeNote> };
-        setStore(ensureBosurWorkspace({ ...INITIAL, ...parsed.store, clients: parsed.store?.clients ?? [], projectDetails: parsed.store?.projectDetails ?? {}, companyBrandGuides: parsed.store?.companyBrandGuides ?? {}, softwareProjects: parsed.store?.softwareProjects ?? [], departmentContexts: parsed.store?.departmentContexts ?? [] }));
+        setStore(ensureBosurWorkspace({ ...INITIAL, ...parsed.store, clients: parsed.store?.clients ?? [], projectDetails: parsed.store?.projectDetails ?? {}, companyBrandGuides: parsed.store?.companyBrandGuides ?? {}, softwareProjects: parsed.store?.softwareProjects ?? [], departmentContexts: parsed.store?.departmentContexts ?? [], proposals: parsed.store?.proposals ?? [], proposalTemplates: parsed.store?.proposalTemplates ?? [] }));
         if (typeof parsed.demoMode === "boolean") setDemoMode(parsed.demoMode);
         if (parsed.companyId) setCompanyId(parsed.companyId);
         if (parsed.resumeNotes && typeof parsed.resumeNotes === "object" && !Array.isArray(parsed.resumeNotes)) {
@@ -403,6 +406,30 @@ export function OperatingConsole() {
       departmentContexts: current.departmentContexts.some(item => item.id === context.id)
         ? current.departmentContexts.map(item => item.id === context.id ? context : item)
         : [...current.departmentContexts, context],
+    }));
+  }
+
+  function saveProposal(proposal: ProposalDocument) {
+    setStore(current => ({
+      ...current,
+      proposals: current.proposals.some(item => item.id === proposal.id)
+        ? current.proposals.map(item => item.id === proposal.id ? proposal : item)
+        : [...current.proposals, proposal],
+    }));
+  }
+
+  function deleteProposal(id: string) {
+    setStore(current => ({
+      ...current, proposals: current.proposals.filter(item => item.id !== id),
+    }));
+  }
+
+  function saveProposalTemplate(template: ProposalTemplate) {
+    setStore(current => ({
+      ...current,
+      proposalTemplates: current.proposalTemplates.some(item => item.id === template.id)
+        ? current.proposalTemplates.map(item => item.id === template.id ? template : item)
+        : [...current.proposalTemplates, template],
     }));
   }
 
@@ -748,6 +775,11 @@ export function OperatingConsole() {
                   <ArrowUpRight size={17}/>
                 </button>
               )}
+              <button className="company-brand-quicklink company-proposal-quicklink" onClick={() => navigate("proposals")}>
+                <span className="company-brand-quicklink-icon"><FileText size={19}/></span>
+                <span><strong>Propuestas y cotizaciones</strong><small>{store.proposals.filter(item => item.companyId === company?.id).length} propuestas · plantillas, identidad de marca y partidas reutilizables</small></span>
+                <ArrowUpRight size={17}/>
+              </button>
               <button className="company-brand-quicklink" onClick={() => navigate("brand")}>
                 <span className="company-brand-quicklink-icon"><Palette size={19}/></span>
                 <span><strong>Identidad de marca</strong><small>{store.companyBrandGuides[company?.id ?? ""] ? "Consultar paleta, logos y lineamientos corporativos" : "Crear Brand Sheet: colores, logos y tipografías oficiales"}</small></span>
@@ -774,6 +806,20 @@ export function OperatingConsole() {
               company={company}
               guide={store.companyBrandGuides[company.id]}
               onSave={guide => saveCompanyBrandGuide(company.id, guide)}
+            />
+          )}
+
+          {view === "proposals" && company && (
+            <ProposalWorkspace
+              key={company.id}
+              company={company}
+              clients={clients.filter(item => item.companyId === company.id)}
+              brand={store.companyBrandGuides[company.id]}
+              proposals={store.proposals.filter(item => item.companyId === company.id)}
+              templates={store.proposalTemplates.filter(item => item.companyId === company.id)}
+              onSave={saveProposal}
+              onDelete={deleteProposal}
+              onSaveTemplate={saveProposalTemplate}
             />
           )}
 
