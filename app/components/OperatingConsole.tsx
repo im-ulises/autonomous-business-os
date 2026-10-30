@@ -731,8 +731,8 @@ export function OperatingConsole() {
                 <button onClick={() => navigate("docs")}><span>Docs propios</span><strong>{companyDocs.length}</strong><small>{sharedDocs.length} compartidos adicionales</small></button>
               </div>
               {company?.id === "evo" && (
-                <button className="company-software-quicklink" onClick={() => navigate("software")}>
-                  <span className="company-software-quicklink-icon"><Code2 size={19}/></span>
+                <button className="company-brand-quicklink company-software-quicklink" onClick={() => navigate("software")}>
+                  <span className="company-brand-quicklink-icon company-software-quicklink-icon"><Code2 size={19}/></span>
                   <span><strong>Software y desarrollo</strong><small>{store.softwareProjects.filter(item => item.companyId === "evo").length} desarrollos · roadmap, fases, hitos y entregables separados de producción audiovisual</small></span>
                   <ArrowUpRight size={17}/>
                 </button>
