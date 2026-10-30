@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import {
   Activity,
   BookOpen,
+  Palette,
   Bot,
   Building2,
   ChevronDown,
@@ -29,9 +30,10 @@ import {
 } from "lucide-react";
 import { demoClients, demoCompanies, demoMissions, demoProjects, sampleDocs } from "@/lib/demo";
 import { ProjectManager } from "@/app/components/ProjectManager";
-import type { Client, Company, LocalDoc, Mission, Project, ProjectDetails, Store, View } from "@/lib/types";
+import { CompanyBrandSection } from "@/app/components/CompanyBrandSection";
+import type { BrandGuide, Client, Company, LocalDoc, Mission, Project, ProjectDetails, Store, View } from "@/lib/types";
 
-const INITIAL: Store = { companies: [], projects: [], missions: [], localDocs: [], clients: [], projectDetails: {} };
+const INITIAL: Store = { companies: [], projects: [], missions: [], localDocs: [], clients: [], projectDetails: {}, companyBrandGuides: {} };
 const STORAGE_KEY = "autonomous-os-simple-ui-v1";
 type ProjectResumeNote = { text: string; savedAt: string };
 
@@ -48,6 +50,7 @@ const COMPANY_TABS: { key: View; label: string; icon: typeof LayoutDashboard }[]
   { key: "projects", label: "Proyectos", icon: FolderKanban },
   { key: "missions", label: "Misiones", icon: Bot },
   { key: "docs", label: "Docs", icon: BookOpen },
+  { key: "brand", label: "Brand Sheet", icon: Palette },
   { key: "departments", label: "Departamentos", icon: Network },
 ];
 const COMPANY_VIEWS: View[] = COMPANY_TABS.map(item => item.key);
@@ -149,7 +152,7 @@ export function OperatingConsole() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { store?: Partial<Store>; demoMode?: boolean; companyId?: string; theme?: "light" | "dark"; resumeNotes?: Record<string, ProjectResumeNote> };
-        setStore({ ...INITIAL, ...parsed.store, clients: parsed.store?.clients ?? [], projectDetails: parsed.store?.projectDetails ?? {} });
+        setStore({ ...INITIAL, ...parsed.store, clients: parsed.store?.clients ?? [], projectDetails: parsed.store?.projectDetails ?? {}, companyBrandGuides: parsed.store?.companyBrandGuides ?? {} });
         if (typeof parsed.demoMode === "boolean") setDemoMode(parsed.demoMode);
         if (parsed.companyId) setCompanyId(parsed.companyId);
         if (parsed.resumeNotes && typeof parsed.resumeNotes === "object" && !Array.isArray(parsed.resumeNotes)) {
@@ -379,6 +382,13 @@ export function OperatingConsole() {
       clients: current.clients.some(item => item.id === client.id)
         ? current.clients.map(item => item.id === client.id ? client : item)
         : [...current.clients, client],
+    }));
+  }
+
+  function saveCompanyBrandGuide(id: string, guide: BrandGuide) {
+    setStore(current => ({
+      ...current,
+      companyBrandGuides: { ...current.companyBrandGuides, [id]: guide },
     }));
   }
 
@@ -699,6 +709,11 @@ export function OperatingConsole() {
                 <button onClick={() => navigate("missions")}><span>Misiones</span><strong>{missions.length}</strong><small>Ver misiones</small></button>
                 <button onClick={() => navigate("docs")}><span>Docs propios</span><strong>{companyDocs.length}</strong><small>{sharedDocs.length} compartidos adicionales</small></button>
               </div>
+              <button className="company-brand-quicklink" onClick={() => navigate("brand")}>
+                <span className="company-brand-quicklink-icon"><Palette size={19}/></span>
+                <span><strong>Identidad de marca</strong><small>{store.companyBrandGuides[company?.id ?? ""] ? "Consultar paleta, logos y lineamientos corporativos" : "Crear Brand Sheet: colores, logos y tipografías oficiales"}</small></span>
+                <ArrowUpRight size={17}/>
+              </button>
               <section className="card">
                 <div className="block-heading"><h3>Proyectos de {company?.name}</h3><button className="text-btn" onClick={() => navigate("projects")}>Ver todos</button></div>
                 {projects.length === 0
@@ -712,6 +727,15 @@ export function OperatingConsole() {
                     </div>}
               </section>
             </>
+          )}
+
+          {view === "brand" && company && (
+            <CompanyBrandSection
+              key={company.id}
+              company={company}
+              guide={store.companyBrandGuides[company.id]}
+              onSave={guide => saveCompanyBrandGuide(company.id, guide)}
+            />
           )}
 
           {view === "departments" && (

@@ -1,4 +1,4 @@
-export type View = "now" | "companies" | "company" | "departments" | "projects" | "missions" | "docs" | "workflows" | "results" | "systems";
+export type View = "now" | "companies" | "company" | "brand" | "departments" | "projects" | "missions" | "docs" | "workflows" | "results" | "systems";
 
 export type Company = {
   id: string;
@@ -46,6 +46,8 @@ export type Store = {
   localDocs: LocalDoc[];
   clients: Client[];
   projectDetails: Record<string, ProjectDetails>;
+  /** Brand guides for each company, including editable demo-company records. */
+  companyBrandGuides: Record<string, BrandGuide>;
 };
 
 export type ProjectPriority = "low" | "normal" | "high" | "critical";
