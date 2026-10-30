@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import "./project-manager.css";
 import "./brand-sheet.css";
+import "./motion.css";
 
 export const metadata: Metadata = {
   title: "Autonomous Business OS",
