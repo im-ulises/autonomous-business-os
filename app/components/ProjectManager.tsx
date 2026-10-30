@@ -65,8 +65,11 @@ export function ProjectManager({
   useEffect(() => {
     if (initialProjectId && projects.some(project => project.id === initialProjectId)) {
       setSelectedId(initialProjectId);
+      setNoteDraft(details[initialProjectId]?.notes ?? "");
+      setBriefDraft(details[initialProjectId]?.brief ?? "");
     }
-  }, [initialProjectId, projects]);
+    // Rehydrate only when navigating to a project, never while the user is typing.
+  }, [initialProjectId, company?.id]);
   useEffect(() => {
     setSelectedId(current => current && projects.some(project => project.id === current) ? current : null);
   }, [company?.id, projects]);
