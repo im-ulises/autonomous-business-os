@@ -171,6 +171,13 @@ export function SoftwareWorkspace({ company, projects, clients, onCreate, onUpda
           <div className="sw-product-mark"><Code2 size={23}/></div>
           <div><span>PROYECTO DE SOFTWARE · {company.name.toUpperCase()}</span><h1>{current.name}</h1><p>{current.description || "Añade una descripción del producto y su objetivo."}</p></div>
         </div>
+        {current.sourceName && <div className="sw-source-banner">
+          <div><span className="sw-source-kicker">ROADMAP IMPORTADO DEL DOCUMENTO DEL CLIENTE</span>
+            <strong>{current.sourceName}</strong>
+            <small>{current.sourceVersion || "Documento de origen"} · Las ventanas de ejecución son orientativas y no constituyen fechas comprometidas.</small>
+          </div>
+          <span className="sw-source-window"><CalendarDays size={14}/>{current.commercialWindow || "Sin ventana indicada"}</span>
+        </div>}
         <div className="sw-detail-metrics">
           <div><strong>{p.percent}%</strong><span>Fases completas</span></div>
           <div><strong>{p.phasesDone}/{p.total}</strong><span>Fases</span></div>
@@ -193,17 +200,25 @@ export function SoftwareWorkspace({ company, projects, clients, onCreate, onUpda
                     <span className={"sw-phase-number sw-phase-number-" + phase.status}>{String(index + 1).padStart(2, "0")}</span>
                     <button className="sw-phase-trigger" onClick={() => setOpenPhaseId(phaseOpen ? null : phase.id)} aria-expanded={phaseOpen}>
                       <span className="sw-phase-trigger-title">{phase.title}</span>
-                      <small>{complete}/{phase.milestones.length} hitos completados</small>
+                      <small>{phase.window ? phase.window + " · " : ""}{complete}/{phase.milestones.length} hitos completados</small>
                     </button>
                     <PhasePill status={phase.status}/>
                     <button className="sw-icon-button" aria-label={phaseOpen ? "Contraer fase" : "Expandir fase"} onClick={() => setOpenPhaseId(phaseOpen ? null : phase.id)}>{phaseOpen ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</button>
                   </div>
                   {phaseOpen && <div className="sw-phase-content">
+                    {(phase.window || phase.sourcePage) && <div className="sw-phase-meta">
+                      {phase.window && <span><CalendarDays size={13}/> Ventana indicativa: <strong>{phase.window}</strong></span>}
+                      {phase.sourcePage && <span>Fuente: Plan de Trabajo v1 · página {phase.sourcePage}</span>}
+                    </div>}
                     <div className="sw-phase-edit-row">
                       <MetaField label="Nombre de la fase"><input value={phase.title} onChange={event => patchPhase(phase.id, { title: event.target.value })}/></MetaField>
                       <MetaField label="Estado de la fase"><select className={"sw-phase-select sw-phase-" + phase.status} value={phase.status} onChange={event => patchPhase(phase.id, { status: event.target.value as SoftwarePhaseStatus })}>{PHASE_STATES.map(item => <option key={item.key} value={item.key}>{item.name}</option>)}</select></MetaField>
                     </div>
                     <MetaField label="Objetivo y alcance de esta fase"><textarea rows={2} placeholder="Qué incluye esta fase, sus condiciones y dependencias..." value={phase.description} onChange={event => patchPhase(phase.id, { description: event.target.value })}/></MetaField>
+                    {phase.demo && <div className="sw-demo-result">
+                      <span><Flag size={14}/> DEMO / RESULTADO DE SALIDA</span>
+                      <p>{phase.demo}</p>
+                    </div>}
                     <div className="sw-milestone-heading"><h3>Hitos y entregables</h3><span>{complete} de {phase.milestones.length} listos</span></div>
                     <div className="sw-milestone-list">
                       {phase.milestones.map(milestone => <div key={milestone.id} className="sw-milestone">
@@ -217,6 +232,11 @@ export function SoftwareWorkspace({ company, projects, clients, onCreate, onUpda
                       {phase.milestones.length === 0 && <p className="sw-muted">Agrega hitos concretos para medir avances reales de esta fase.</p>}
                     </div>
                     <form className="sw-milestone-add" onSubmit={event => addMilestone(event, phase)}><input aria-label="Nuevo hito" value={milestoneDrafts[phase.id] ?? ""} onChange={event => setMilestoneDrafts(current => ({ ...current, [phase.id]: event.target.value }))} placeholder="Nuevo hito o entregable..." maxLength={160}/><button type="submit" disabled={!(milestoneDrafts[phase.id] ?? "").trim()}><Plus size={14}/> Añadir</button></form>
+                    {!!phase.acceptanceCriteria?.length && <div className="sw-acceptance">
+                      <div><CheckCircle2 size={15}/><h3>Criterios de salida del documento</h3></div>
+                      <p className="sw-acceptance-note">Referencias para verificar el cierre; no se marcan automáticamente como cumplidas.</p>
+                      <ul>{phase.acceptanceCriteria.map((criterion, i) => <li key={i}>{criterion}</li>)}</ul>
+                    </div>}
                     <MetaField label="Notas y dependencias de esta fase"><textarea rows={2} value={phase.notes} onChange={event => patchPhase(phase.id, { notes: event.target.value })} placeholder="Bloqueos, decisiones, revisión, dependencias..."/></MetaField>
                     <div className="sw-phase-actions"><button disabled={index === 0} onClick={() => movePhase(index,-1)}><ChevronUp size={14}/> Subir fase</button><button disabled={index === current.phases.length-1} onClick={() => movePhase(index,1)}><ChevronDown size={14}/> Bajar fase</button><button className="sw-danger-action" onClick={() => removePhase(phase.id)}><Trash2 size={14}/> Eliminar fase</button></div>
                   </div>}
@@ -293,7 +313,7 @@ export function SoftwareWorkspace({ company, projects, clients, onCreate, onUpda
       <span className="sw-overline">PORTAFOLIO LISTO</span>
       <h2>Una forma distinta de gestionar software</h2>
       <p>Sin mezclarlo con videos ni sitios web. Cada producto tendrá un roadmap de fases, hitos, dependencias, entregables y una ficha técnica propia.</p>
-      <div className="sw-next-project"><Flag size={17}/><span><strong>Próximo proyecto a incorporar: BOSUR</strong><small>Etapas y alcance pendientes del documento que compartirás. Aún no se ha creado su ficha para evitar supuestos.</small></span></div>
+      <div className="sw-next-project"><Flag size={17}/><span><strong>Roadmap por hitos y validaciones</strong><small>Cada proyecto puede usar sus propias fases. Los estados y aprobaciones se registran manualmente.</small></span></div>
       <button onClick={() => setCreating(true)}>Crear proyecto de software <Plus size={15}/></button>
     </section> : filtered.length ? <div className="sw-portfolio-grid">{filtered.map(project => {
       const p = progress(project);
@@ -301,7 +321,7 @@ export function SoftwareWorkspace({ company, projects, clients, onCreate, onUpda
       const linked = clients.find(client => client.id === project.clientId);
       return <button className="sw-project-card" type="button" key={project.id} onClick={() => { setSelectedId(project.id); setOpenPhaseId(next?.id ?? null); }}>
         <div className="sw-project-card-head"><span className="sw-project-symbol"><Code2 size={19}/></span><StatePill status={project.status}/></div>
-        <span className="sw-project-client">{linked?.name || company.name}</span>
+        <span className="sw-project-client">{linked?.name || company.name}{project.sourceName ? " · Plan de implementación" : ""}</span>
         <h3>{project.name}</h3>
         <p>{project.description || "Sin descripción todavía"}</p>
         <div className="sw-project-card-progress"><div><span>Fases completadas</span><strong>{p.percent}%</strong></div><div className="sw-progress-track"><div style={{ width: p.percent + "%" }}/></div></div>

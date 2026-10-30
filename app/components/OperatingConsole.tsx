@@ -32,6 +32,7 @@ import {
 import { demoClients, demoCompanies, demoMissions, demoProjects, sampleDocs } from "@/lib/demo";
 import { ProjectManager } from "@/app/components/ProjectManager";
 import { SoftwareWorkspace } from "@/app/components/SoftwareWorkspace";
+import { ensureBosurWorkspace } from "@/lib/bosur-plan";
 import { CompanyBrandSection } from "@/app/components/CompanyBrandSection";
 import type { BrandGuide, Client, Company, LocalDoc, Mission, Project, ProjectDetails, SoftwareProject, Store, View } from "@/lib/types";
 
@@ -123,7 +124,7 @@ function EmptyState({ title, description, action }: { title: string; description
 export function OperatingConsole() {
   const [view, setView] = useState<View>("now");
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [store, setStore] = useState<Store>(INITIAL);
+  const [store, setStore] = useState<Store>(() => ensureBosurWorkspace(INITIAL));
   const [demoMode, setDemoMode] = useState(true);
   const [companyId, setCompanyId] = useState("evo");
   const [ready, setReady] = useState(false);
@@ -155,7 +156,7 @@ export function OperatingConsole() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { store?: Partial<Store>; demoMode?: boolean; companyId?: string; theme?: "light" | "dark"; resumeNotes?: Record<string, ProjectResumeNote> };
-        setStore({ ...INITIAL, ...parsed.store, clients: parsed.store?.clients ?? [], projectDetails: parsed.store?.projectDetails ?? {}, companyBrandGuides: parsed.store?.companyBrandGuides ?? {}, softwareProjects: parsed.store?.softwareProjects ?? [] });
+        setStore(ensureBosurWorkspace({ ...INITIAL, ...parsed.store, clients: parsed.store?.clients ?? [], projectDetails: parsed.store?.projectDetails ?? {}, companyBrandGuides: parsed.store?.companyBrandGuides ?? {}, softwareProjects: parsed.store?.softwareProjects ?? [] }));
         if (typeof parsed.demoMode === "boolean") setDemoMode(parsed.demoMode);
         if (parsed.companyId) setCompanyId(parsed.companyId);
         if (parsed.resumeNotes && typeof parsed.resumeNotes === "object" && !Array.isArray(parsed.resumeNotes)) {
