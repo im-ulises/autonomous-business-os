@@ -50,6 +50,8 @@ export type Store = {
   companyBrandGuides: Record<string, BrandGuide>;
   softwareProjects: SoftwareProject[];
   departmentContexts: DepartmentContext[];
+  proposalTemplates: ProposalTemplate[];
+  proposals: ProposalDocument[];
 };
 
 export type ProjectPriority = "low" | "normal" | "high" | "critical";
@@ -239,5 +241,66 @@ export type DepartmentContext = {
   kpis: DepartmentKpi[];
   lessons: DepartmentLesson[];
   revision: number;
+  updatedAt: string;
+};
+
+/** Per-company proposal templates are reusable design/content presets, not invoices. */
+export type ProposalTemplate = {
+  id: string;
+  companyId: string;
+  name: string;
+  layout: "editorial" | "classic";
+  useBrandSheet: boolean;
+  accentHex: string;
+  customLogoUrl: string;
+  sellerTagline: string;
+  sellerAddress: string;
+  sellerEmail: string;
+  sellerPhone: string;
+  defaultIntroduction: string;
+  defaultScope: string;
+  defaultDeliverables: string;
+  defaultTimeline: string;
+  defaultTerms: string;
+  defaultExclusions: string;
+  defaultNotes: string;
+  defaultCurrency: "MXN" | "USD";
+  defaultTaxPercent: number;
+  defaultDepositPercent: number;
+  createdAt: string;
+};
+export type ProposalLineItem = {
+  id: string;
+  description: string;
+  details: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+};
+export type ProposalDocument = {
+  id: string;
+  companyId: string;
+  templateId: string;
+  number: string;
+  title: string;
+  status: "draft" | "sent" | "approved" | "declined";
+  clientId: string;
+  clientName: string;
+  clientContact: string;
+  issueDate: string;
+  validUntil: string;
+  currency: "MXN" | "USD";
+  introduction: string;
+  scope: string;
+  deliverables: string;
+  timeline: string;
+  terms: string;
+  exclusions: string;
+  notes: string;
+  taxPercent: number;
+  depositPercent: number;
+  items: ProposalLineItem[];
+  templateSnapshot: ProposalTemplate;
+  createdAt: string;
   updatedAt: string;
 };
