@@ -49,6 +49,7 @@ export type Store = {
   /** Brand guides for each company, including editable demo-company records. */
   companyBrandGuides: Record<string, BrandGuide>;
   softwareProjects: SoftwareProject[];
+  departmentContexts: DepartmentContext[];
 };
 
 export type ProjectPriority = "low" | "normal" | "high" | "critical";
@@ -187,4 +188,56 @@ export type SoftwareProject = {
     blockers: string[];
     findings: string[];
   };
+};
+
+/** The company department owns context, not the reusable agent's identity or permissions. */
+export type DepartmentObjective = {
+  id: string;
+  text: string;
+  priority: "high" | "medium" | "low";
+  status: "active" | "paused" | "achieved";
+};
+
+export type DepartmentKpi = {
+  id: string;
+  name: string;
+  target: string;
+  unit: string;
+  cadence: string;
+  measurementSource: string;
+};
+
+export type DepartmentLesson = {
+  id: string;
+  category: "worked" | "failed" | "insight" | "decision";
+  title: string;
+  situation: string;
+  outcome: string;
+  learning: string;
+  evidenceUrl: string;
+  observedAt: string;
+  status: "draft" | "approved" | "rejected";
+  reviewedBy: string;
+};
+
+export type DepartmentContext = {
+  id: string;
+  companyId: string;
+  name: string;
+  purpose: string;
+  agentRole: string;
+  mission: string;
+  successCriteria: string;
+  toneOfVoice: string;
+  workMode: string;
+  operatingProcedure: string;
+  constraints: string;
+  escalationRules: string;
+  expectedInputs: string;
+  expectedOutputs: string;
+  objectives: DepartmentObjective[];
+  kpis: DepartmentKpi[];
+  lessons: DepartmentLesson[];
+  revision: number;
+  updatedAt: string;
 };

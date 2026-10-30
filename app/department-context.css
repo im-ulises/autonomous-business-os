@@ -1,0 +1,114 @@
+
+/* Department context / agent-ready configuration: light, predictable layout. */
+.sana-shell .dc-root{display:flex;flex-direction:column;gap:21px;min-width:0;color:#2e2b33}
+.sana-shell .dc-page-header,.sana-shell .dc-detail-header{display:flex;align-items:end;justify-content:space-between;gap:18px}
+.sana-shell .dc-eyebrow{font-size:9.5px;font-weight:730;letter-spacing:.08em;color:#9a8eae}
+.sana-shell .dc-page-header h1,.sana-shell .dc-detail-header h1{font-size:32px;line-height:1.2;letter-spacing:-1px;margin:7px 0;font-weight:680}
+.sana-shell .dc-page-header p,.sana-shell .dc-detail-header p{font-size:11.5px;color:#918c97;line-height:1.6;margin:0;max-width:710px}
+.sana-shell .dc-dark-button{display:inline-flex;justify-content:center;align-items:center;gap:8px;background:#29272e;border:1px solid #29272e;color:#fff;padding:10px 13px;border-radius:9px;white-space:nowrap;font-size:11px;font-weight:660;min-height:38px}
+.sana-shell .dc-dark-button:hover{background:#494352}
+.sana-shell .dc-dark-button:disabled{opacity:.38;cursor:not-allowed}
+.sana-shell .dc-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:white;border:1px solid #e9e6eb;border-radius:14px;overflow:hidden}
+.sana-shell .dc-summary>div{display:grid;grid-template-columns:30px 1fr;align-items:center;gap:4px 10px;padding:17px 19px;border-right:1px solid #eeecef}
+.sana-shell .dc-summary>div:last-child{border:0}
+.sana-shell .dc-summary svg{grid-row:span 2;color:#9282a7}
+.sana-shell .dc-summary strong{font-size:24px;line-height:1;font-weight:700}
+.sana-shell .dc-summary span{font-size:10px;color:#a29ca6}
+.sana-shell .dc-intro-note{display:flex;align-items:center;gap:11px;color:#766a86;background:#f4f0f8;border:1px solid #eae4f1;border-radius:11px;padding:15px;font-size:11px;line-height:1.6}
+.sana-shell .dc-intro-note svg{flex:none;color:#9a88b1}
+.sana-shell .dc-section-heading h2{font-size:17px;letter-spacing:-.35px;margin:0 0 6px}
+.sana-shell .dc-section-heading p{font-size:11px;color:#a09aa5;margin:0}
+.sana-shell .dc-section{display:grid;gap:15px}
+.sana-shell .dc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.sana-shell .dc-department-card{min-width:0;min-height:205px;display:flex;flex-direction:column;gap:10px;background:#fff;border:1px solid #ece9ef;border-radius:13px;padding:19px;text-align:left;color:#342e3a;transition:background-color 120ms ease,border-color 120ms ease}
+.sana-shell .dc-department-card:hover{background:#fefcff;border-color:#cfc6de}
+.sana-shell .dc-card-top{display:flex;align-items:center;justify-content:space-between;color:#a49baa;margin-bottom:5px}
+.sana-shell .dc-dept-icon{display:grid;place-items:center;width:38px;height:38px;background:#f1ecf8;color:#88739e;border-radius:11px}
+.sana-shell .dc-department-card>strong{font-size:16px;letter-spacing:-.4px}
+.sana-shell .dc-department-card>p{font-size:11px;line-height:1.5;color:#99919f;margin:0;flex:1}
+.sana-shell .dc-card-stats{display:flex;flex-wrap:wrap;gap:7px;font-size:9px;color:#85798c}
+.sana-shell .dc-card-stats span{background:#f4f1f6;border-radius:6px;padding:5px 7px}
+.sana-shell .dc-template-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sana-shell .dc-template-grid>button{display:grid;gap:8px;min-width:0;text-align:left;background:#fff;border:1px dashed #ded8e6;border-radius:11px;padding:15px;color:#4a4354}
+.sana-shell .dc-template-grid>button:hover{background:#faf8fc;border-color:#b3a4c8}
+.sana-shell .dc-template-grid>button>span{display:flex;align-items:center;gap:9px}
+.sana-shell .dc-template-grid strong{font-size:12px}
+.sana-shell .dc-template-grid small{color:#a49aa9;font-size:10px;line-height:1.5}
+.sana-shell .dc-template-icon{display:grid;place-items:center;width:29px;height:29px;border-radius:8px;background:#efeaf5;color:#8e80a4}
+.sana-shell .dc-add-box,.sana-shell .dc-add-row{display:flex;gap:9px;align-items:center;background:#fff;border:1px solid #eee9f0;border-radius:11px;padding:11px}
+.sana-shell .dc-add-box input,.sana-shell .dc-add-row input{flex:1;min-width:0;padding:10px;border:1px solid #e9e5ed;border-radius:8px;background:#fbfafc;font-family:inherit;font-size:11px}
+.sana-shell .dc-icon-btn{display:grid;place-items:center;border:0;background:transparent;color:#92899a;padding:7px}
+.sana-shell .dc-breadcrumb{display:flex;align-items:center;gap:10px;color:#b0a8b6;font-size:10.5px}
+.sana-shell .dc-breadcrumb button{display:inline-flex;align-items:center;gap:7px;background:transparent;border:0;color:#81758e;padding:0;font-size:11px}
+.sana-shell .dc-breadcrumb strong{color:#514a57}
+.sana-shell .dc-header-controls{display:flex;align-items:center;gap:11px}
+.sana-shell .dc-header-controls>span{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#99939e}
+.sana-shell .dc-detail-layout{display:grid;grid-template-columns:224px minmax(0,1fr);gap:16px;align-items:start}
+.sana-shell .dc-nav{display:flex;flex-direction:column;gap:5px;min-width:0;padding:17px 10px;background:#fff;border:1px solid #ece9ef;border-radius:13px}
+.sana-shell .dc-nav>span{font-size:9px;font-weight:710;letter-spacing:.08em;color:#aaa2ae;padding:2px 10px 11px}
+.sana-shell .dc-nav>button{display:flex;align-items:center;gap:11px;text-align:left;background:transparent;border:1px solid transparent;border-radius:9px;color:#837989;padding:12px 10px;min-width:0}
+.sana-shell .dc-nav>button:hover{background:#f9f7fa}
+.sana-shell .dc-nav>button.is-selected{background:#f1edf6;color:#6b5b83;border-color:#e9e2f1}
+.sana-shell .dc-nav>button>span{display:grid;gap:4px;min-width:0}
+.sana-shell .dc-nav>button strong{font-size:11.5px;font-weight:660}
+.sana-shell .dc-nav>button small{font-size:9px;color:#aaa2ae}
+.sana-shell .dc-nav-foot{display:flex;align-items:flex-start;gap:9px;margin:12px 5px 1px;border-top:1px solid #f0edf2;padding:16px 5px 0;font-size:10px;color:#a6a0aa;line-height:1.55}
+.sana-shell .dc-nav-foot svg{flex:none;color:#8a9d8d}
+.sana-shell .dc-panel{min-width:0;display:grid;gap:13px;padding:22px;background:#fff;border:1px solid #ece9ef;border-radius:14px}
+.sana-shell .dc-panel-title{margin:1px 0 9px}
+.sana-shell .dc-panel-title h2{font-size:19px;letter-spacing:-.4px;font-weight:675;margin:0 0 7px}
+.sana-shell .dc-panel-title p{font-size:11px;line-height:1.6;color:#a29ba6;max-width:610px;margin:0}
+.sana-shell .dc-field{display:grid;gap:7px;min-width:0;font-size:11px;color:#65606b}
+.sana-shell .dc-field>span{font-size:11px;font-weight:660;color:#615b66}
+.sana-shell .dc-field>small{font-size:10px;line-height:1.45;color:#a19ba7}
+.sana-shell .dc-field input,.sana-shell .dc-field textarea,.sana-shell .dc-field select{width:100%;min-width:0;max-width:100%;font-family:inherit;font-size:11.5px;line-height:1.55;border:1px solid #e8e5ea;border-radius:9px;background:#fcfbfc;color:#3b3540;outline:0;padding:11px 12px;resize:vertical}
+.sana-shell .dc-field input:focus,.sana-shell .dc-field textarea:focus,.sana-shell .dc-field select:focus{border-color:#a593bc;background:#fff}
+.sana-shell .dc-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.sana-shell .dc-divider-label{font-size:9px;letter-spacing:.09em;font-weight:735;color:#b2aab7;border-top:1px solid #f0eef2;padding-top:19px;margin:9px 0 2px}
+.sana-shell .dc-record{display:grid;gap:11px;border:1px solid #ece9f0;border-radius:11px;padding:16px;background:#fdfcfe}
+.sana-shell .dc-record-top{display:flex;align-items:center;justify-content:space-between;font-size:9px;color:#a499af;letter-spacing:.05em;font-weight:720}
+.sana-shell .dc-record-top button{border:0;background:transparent;padding:4px;color:#b1a9b6}
+.sana-shell .dc-record-top button:hover{color:#c16069}
+.sana-shell .dc-empty-inline{display:flex;align-items:center;flex-direction:column;text-align:center;gap:9px;padding:32px 20px;color:#9081a8;border:1px dashed #e9e2ee;border-radius:11px;background:#fbf9fc}
+.sana-shell .dc-empty-inline strong{font-size:12px;color:#585061}
+.sana-shell .dc-empty-inline p{font-size:11px;line-height:1.6;max-width:440px;color:#aba3ae;margin:0}
+.sana-shell .dc-warning{display:flex;align-items:center;gap:7px;font-size:10px;color:#a88348;background:#fff7e8;padding:9px;border-radius:8px;margin:0}
+.sana-shell .dc-learning-summary{display:flex;flex-wrap:wrap;gap:10px;font-size:10px;color:#a29ba6}
+.sana-shell .dc-learning-summary span{display:flex;align-items:center;gap:6px;background:#f6f3f8;padding:8px 10px;border-radius:7px}
+.sana-shell .dc-record-state span{display:inline-flex;font-size:10px;font-weight:680;border-radius:6px;padding:5px 8px}
+.sana-shell .dc-approved{color:#458063;background:#e6f3eb}
+.sana-shell .dc-draft{color:#9e7842;background:#fbefd9}
+.sana-shell .dc-review-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;padding-top:3px}
+.sana-shell .dc-outline-button{border:1px solid #e8e3eb;background:#fff;border-radius:8px;color:#766c80;padding:10px 12px;font-size:10px}
+.sana-shell .dc-export-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sana-shell .dc-export-grid>button{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-width:0;min-height:166px;text-align:left;border:1px solid #e9e5ec;background:#fcfbfd;border-radius:11px;padding:15px;color:#554b60}
+.sana-shell .dc-export-grid>button:hover{border-color:#c6b8d3;background:#f8f5fa}
+.sana-shell .dc-export-grid>button>span{display:grid;place-items:center;width:37px;height:37px;border-radius:9px;background:#eee9f6;color:#86729e}
+.sana-shell .dc-export-grid strong{font-size:12px}
+.sana-shell .dc-export-grid small{font-size:10px;line-height:1.5;color:#a39aab;flex:1}
+.sana-shell .dc-export-grid>button>svg{align-self:flex-end;color:#9483ab}
+.sana-shell .dc-preview-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.sana-shell .dc-preview-head h3{font-size:12px;margin:0}
+.sana-shell .dc-preview-head>div{display:flex;gap:3px;background:#f3f0f5;padding:4px;border-radius:8px}
+.sana-shell .dc-preview-head button{font-size:10px;border:0;padding:6px 9px;border-radius:5px;background:transparent;color:#867b8f}
+.sana-shell .dc-preview-head button.active{background:white;color:#5d4b74}
+.sana-shell .dc-code-preview{max-height:400px;overflow:auto;max-width:100%;white-space:pre;font-size:10px;line-height:1.6;background:#28262c;color:#ede6f5;padding:18px;border-radius:10px;margin:0}
+.sana-shell .dc-security-note{display:flex;align-items:flex-start;gap:10px;border:1px solid #e5eee6;border-radius:10px;background:#f3f8f3;padding:15px;color:#678c70}
+.sana-shell .dc-security-note svg{flex:none}
+.sana-shell .dc-security-note strong{font-size:11px}
+.sana-shell .dc-security-note p{font-size:10px;line-height:1.65;color:#7e9783;margin:5px 0 0}
+.sana-shell .dc-footnote{font-size:10.5px;color:#aaa3b1;line-height:1.5;margin:0}
+.sana-shell.theme-dark .dc-root,.sana-shell.theme-dark .dc-page-header h1,.sana-shell.theme-dark .dc-detail-header h1,.sana-shell.theme-dark .dc-panel-title h2,.sana-shell.theme-dark .dc-section-heading h2{color:#f4eff7}
+.sana-shell.theme-dark .dc-summary,.sana-shell.theme-dark .dc-department-card,.sana-shell.theme-dark .dc-template-grid>button,.sana-shell.theme-dark .dc-nav,.sana-shell.theme-dark .dc-panel,.sana-shell.theme-dark .dc-record,.sana-shell.theme-dark .dc-add-row,.sana-shell.theme-dark .dc-add-box{background:#28262c;border-color:#47414d;color:#eae4ed}
+.sana-shell.theme-dark .dc-field input,.sana-shell.theme-dark .dc-field textarea,.sana-shell.theme-dark .dc-field select,.sana-shell.theme-dark .dc-add-row input,.sana-shell.theme-dark .dc-add-box input{background:#322f37;border-color:#514957;color:#f3edf5}
+.sana-shell.theme-dark .dc-field>span,.sana-shell.theme-dark .dc-department-card>strong,.sana-shell.theme-dark .dc-nav>button strong,.sana-shell.theme-dark .dc-record-top,.sana-shell.theme-dark .dc-preview-head h3{color:#e9e1ef}
+.sana-shell.theme-dark .dc-nav>button.is-selected,.sana-shell.theme-dark .dc-intro-note{background:#393041;border-color:#5a4e61;color:#ddd0eb}
+.sana-shell.theme-dark .dc-nav>button:hover,.sana-shell.theme-dark .dc-department-card:hover{background:#333038}
+.sana-shell.theme-dark .dc-export-grid>button,.sana-shell.theme-dark .dc-review-actions button.dc-outline-button,.sana-shell.theme-dark .dc-empty-inline,.sana-shell.theme-dark .dc-code-preview{border-color:#554d5b}
+.sana-shell.theme-dark .dc-export-grid>button{background:#322e36;color:#e9dff3}
+.sana-shell.theme-dark .dc-card-stats span,.sana-shell.theme-dark .dc-learning-summary span{background:#39333f}
+.sana-shell.theme-dark .dc-security-note{background:#2e4433;border-color:#47604d;color:#b5dcc2}
+.sana-shell.theme-dark .dc-security-note p{color:#b5cbb9}
+@media(max-width:1120px){.sana-shell .dc-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sana-shell .dc-template-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:860px){.sana-shell .dc-detail-layout{grid-template-columns:minmax(0,1fr)}.sana-shell .dc-nav{display:flex;flex-direction:row;overflow-x:auto;gap:7px;padding:9px}.sana-shell .dc-nav>span,.sana-shell .dc-nav-foot,.sana-shell .dc-nav>button small{display:none}.sana-shell .dc-nav>button{flex:none;padding:10px}.sana-shell .dc-nav>button strong{white-space:nowrap}.sana-shell .dc-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.sana-shell .dc-summary>div:nth-child(2){border-right:0}.sana-shell .dc-summary>div:nth-child(-n+2){border-bottom:1px solid #eeecef}}
+@media(max-width:620px){.sana-shell .dc-page-header,.sana-shell .dc-detail-header{align-items:stretch;flex-direction:column}.sana-shell .dc-page-header h1,.sana-shell .dc-detail-header h1{font-size:27px}.sana-shell .dc-dark-button{align-self:flex-start}.sana-shell .dc-grid,.sana-shell .dc-template-grid,.sana-shell .dc-field-grid,.sana-shell .dc-export-grid{grid-template-columns:minmax(0,1fr)}.sana-shell .dc-panel{padding:15px}.sana-shell .dc-export-grid>button{min-height:110px}.sana-shell .dc-header-controls{justify-content:space-between}.sana-shell .dc-review-actions{justify-content:flex-start}}

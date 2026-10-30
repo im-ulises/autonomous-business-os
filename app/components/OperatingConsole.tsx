@@ -32,11 +32,12 @@ import {
 import { demoClients, demoCompanies, demoMissions, demoProjects, sampleDocs } from "@/lib/demo";
 import { ProjectManager } from "@/app/components/ProjectManager";
 import { SoftwareWorkspace } from "@/app/components/SoftwareWorkspace";
+import { DepartmentWorkspace } from "@/app/components/DepartmentWorkspace";
 import { ensureBosurWorkspace } from "@/lib/bosur-plan";
 import { CompanyBrandSection } from "@/app/components/CompanyBrandSection";
-import type { BrandGuide, Client, Company, LocalDoc, Mission, Project, ProjectDetails, SoftwareProject, Store, View } from "@/lib/types";
+import type { BrandGuide, Client, Company, DepartmentContext, LocalDoc, Mission, Project, ProjectDetails, SoftwareProject, Store, View } from "@/lib/types";
 
-const INITIAL: Store = { companies: [], projects: [], missions: [], localDocs: [], clients: [], projectDetails: {}, companyBrandGuides: {}, softwareProjects: [] };
+const INITIAL: Store = { companies: [], projects: [], missions: [], localDocs: [], clients: [], projectDetails: {}, companyBrandGuides: {}, softwareProjects: [], departmentContexts: [] };
 const STORAGE_KEY = "autonomous-os-simple-ui-v1";
 type ProjectResumeNote = { text: string; savedAt: string };
 
@@ -156,7 +157,7 @@ export function OperatingConsole() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { store?: Partial<Store>; demoMode?: boolean; companyId?: string; theme?: "light" | "dark"; resumeNotes?: Record<string, ProjectResumeNote> };
-        setStore(ensureBosurWorkspace({ ...INITIAL, ...parsed.store, clients: parsed.store?.clients ?? [], projectDetails: parsed.store?.projectDetails ?? {}, companyBrandGuides: parsed.store?.companyBrandGuides ?? {}, softwareProjects: parsed.store?.softwareProjects ?? [] }));
+        setStore(ensureBosurWorkspace({ ...INITIAL, ...parsed.store, clients: parsed.store?.clients ?? [], projectDetails: parsed.store?.projectDetails ?? {}, companyBrandGuides: parsed.store?.companyBrandGuides ?? {}, softwareProjects: parsed.store?.softwareProjects ?? [], departmentContexts: parsed.store?.departmentContexts ?? [] }));
         if (typeof parsed.demoMode === "boolean") setDemoMode(parsed.demoMode);
         if (parsed.companyId) setCompanyId(parsed.companyId);
         if (parsed.resumeNotes && typeof parsed.resumeNotes === "object" && !Array.isArray(parsed.resumeNotes)) {
@@ -393,6 +394,15 @@ export function OperatingConsole() {
     setStore(current => ({
       ...current,
       companyBrandGuides: { ...current.companyBrandGuides, [id]: guide },
+    }));
+  }
+
+  function saveDepartmentContext(context: DepartmentContext) {
+    setStore(current => ({
+      ...current,
+      departmentContexts: current.departmentContexts.some(item => item.id === context.id)
+        ? current.departmentContexts.map(item => item.id === context.id ? context : item)
+        : [...current.departmentContexts, context],
     }));
   }
 
@@ -767,18 +777,14 @@ export function OperatingConsole() {
             />
           )}
 
-          {view === "departments" && (
-            <>
-              <SectionHeader title="Departamentos" description={`Departamentos propuestos de ${company?.name}. Aún sin ejecución real.`} />
-              <div className="card">
-                <div className="simple-table">
-                  <div className="table-row table-head"><span>Departamento</span><span>Responsabilidad</span></div>
-                  {DEPARTMENTS.map(([dept, desc]) => (
-                    <div className="table-row two-col" key={dept}><strong>{dept}</strong><span>{desc}</span></div>
-                  ))}
-                </div>
-              </div>
-            </>
+          {view === "departments" && company && (
+            <DepartmentWorkspace
+              key={company.id}
+              company={company}
+              departments={store.departmentContexts.filter(item => item.companyId === company.id)}
+              brand={store.companyBrandGuides[company.id]}
+              onSave={saveDepartmentContext}
+            />
           )}
 
           {view === "software" && company?.id === "evo" && (
