@@ -20,6 +20,10 @@ import {
   ShieldCheck,
   Workflow,
   X,
+  Sparkles,
+  ArrowUpRight,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { demoCompanies, demoMissions, demoProjects, sampleDocs } from "@/lib/demo";
 import type { Company, LocalDoc, Mission, Project, Store, View } from "@/lib/types";
@@ -108,6 +112,7 @@ function EmptyState({ title, description, action }: { title: string; description
 
 export function OperatingConsole() {
   const [view, setView] = useState<View>("now");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const [store, setStore] = useState<Store>(INITIAL);
   const [demoMode, setDemoMode] = useState(true);
   const [companyId, setCompanyId] = useState("evo");
@@ -134,18 +139,19 @@ export function OperatingConsole() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as { store?: Partial<Store>; demoMode?: boolean; companyId?: string };
+        const parsed = JSON.parse(raw) as { store?: Partial<Store>; demoMode?: boolean; companyId?: string; theme?: "light" | "dark" };
         setStore({ ...INITIAL, ...parsed.store });
         if (typeof parsed.demoMode === "boolean") setDemoMode(parsed.demoMode);
         if (parsed.companyId) setCompanyId(parsed.companyId);
+        if (parsed.theme === "light" || parsed.theme === "dark") setTheme(parsed.theme);
       }
     } catch {}
     setReady(true);
   }, []);
 
   useEffect(() => {
-    if (ready) localStorage.setItem(STORAGE_KEY, JSON.stringify({ store, demoMode, companyId }));
-  }, [ready, store, demoMode, companyId]);
+    if (ready) localStorage.setItem(STORAGE_KEY, JSON.stringify({ store, demoMode, companyId, theme }));
+  }, [ready, store, demoMode, companyId, theme]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -335,13 +341,13 @@ export function OperatingConsole() {
   const activeGlobalView = COMPANY_VIEWS.includes(view) ? "companies" : view;
 
   return (
-    <div className="simple-shell">
+    <div className={`simple-shell sana-shell theme-${theme}`}>
       <aside className={`simple-sidebar ${mobileOpen ? "open" : ""}`}>
         <div className="simple-brand">
-          <div className="brand-dot">A</div>
+          <div className="brand-dot"><Sparkles size={17}/></div>
           <div>
             <strong>Autonomous OS</strong>
-            <small>Control de negocios + Crobi</small>
+            <small>Workspace</small>
           </div>
         </div>
 
@@ -373,6 +379,7 @@ export function OperatingConsole() {
           </div>
         )}
 
+        <div className="sana-side-label">NAVEGACIÓN</div>
         <nav className="simple-nav">
           {NAV.map((item) => {
             const Icon = item.icon;
@@ -385,7 +392,20 @@ export function OperatingConsole() {
           })}
         </nav>
 
+        <div className="sana-side-spaces">
+          <div className="sana-spaces-heading"><span>ESPACIOS</span><button aria-label="Nueva empresa" title="Nueva empresa" onClick={() => openModal("company")}><Plus size={15}/></button></div>
+          {companies.slice(0, 6).map(item => (
+            <button key={item.id} className={view !== "now" && COMPANY_VIEWS.includes(view) && company?.id === item.id ? "selected" : ""} onClick={() => openCompany(item.id)}>
+              <span className="sana-space-dot" style={{background: item.accent || "#9da7fb"}}/>
+              <span>{item.name}</span>
+            </button>
+          ))}
+        </div>
+
         <div className="simple-sidebar-footer">
+          <button className="sana-theme-toggle" onClick={() => setTheme(current => current === "light" ? "dark" : "light")} aria-label={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}>
+            {theme === "light" ? <Moon size={16}/> : <Sun size={16}/>}<span>{theme === "light" ? "Modo oscuro" : "Modo claro"}</span>
+          </button>
           <label className="demo-toggle">
             <input type="checkbox" checked={demoMode} onChange={() => setDemoMode((value) => !value)} />
             <span>Mostrar ejemplos</span>
@@ -404,7 +424,7 @@ export function OperatingConsole() {
           </button>
           <button className="search-btn" onClick={() => setSearchOpen(true)}>
             <Search size={16} />
-            <span>Buscar vista, proyecto o misión</span>
+            <span>Buscar en tu espacio de trabajo</span>
             <kbd>⌘K</kbd>
           </button>
           <div className="topbar-actions">
@@ -429,10 +449,35 @@ export function OperatingConsole() {
           )}
           {view === "now" && (
             <>
-              <SectionHeader
-                title="Ahora"
-                description="Vista global. Entra a una empresa para ver sus proyectos, misiones y documentos."
-              />
+              <div className="sana-home-hero">
+                <div className="sana-greeting-icon"><Sparkles size={21}/></div>
+                <h1>Hola, ¿en qué trabajamos hoy?</h1>
+                <p>Todo tu trabajo y tus empresas, en un solo lugar.</p>
+                <div className="sana-command-input">
+                  <button className="sana-command-plus" aria-label="Nueva misión" title="Nueva misión" onClick={() => openModal("mission")}><Plus size={19}/></button>
+                  <button className="sana-command-placeholder" onClick={() => openModal("mission")}>Pide un resultado o describe una misión...</button>
+                  <button className="sana-command-send" aria-label="Crear misión" onClick={() => openModal("mission")}><ArrowUpRight size={18}/></button>
+                </div>
+                <div className="sana-suggestion-title"><span>Sugerencias</span><span>Empieza desde aquí</span></div>
+                <div className="sana-suggestion-grid">
+                  <button className="sana-suggestion sana-suggestion-lilac" onClick={() => openModal("mission")}>
+                    <span className="sana-suggestion-meta"><Sparkles size={16}/> PARA EMPEZAR</span>
+                    <strong>¿Qué podemos hacer por tu empresa hoy?</strong>
+                    <span className="sana-suggestion-bottom">Crear una misión <ArrowUpRight size={17}/></span>
+                  </button>
+                  <button className="sana-suggestion sana-suggestion-blue" onClick={() => navigate("companies")}>
+                    <span className="sana-suggestion-meta"><Building2 size={16}/> WORKSPACES</span>
+                    <strong>Un espacio para cada empresa.</strong>
+                    <span className="sana-suggestion-bottom">Explorar empresas <ArrowUpRight size={17}/></span>
+                  </button>
+                  <button className="sana-suggestion sana-suggestion-sand" onClick={() => navigate("workflows")}>
+                    <span className="sana-suggestion-meta"><Workflow size={16}/> PLANTILLAS</span>
+                    <strong>Reutiliza procesos sin comenzar de cero.</strong>
+                    <span className="sana-suggestion-bottom">Ver workflows <ArrowUpRight size={17}/></span>
+                  </button>
+                </div>
+              </div>
+              <div className="sana-dashboard-kicker"><h2>Tu espacio de trabajo</h2><p>Resumen global · Datos de demostración cuando están activados</p></div>
 
               <div className="focus-grid">
                 <section className="card focus-card">
@@ -497,7 +542,7 @@ export function OperatingConsole() {
 
           {view === "companies" && (
             <>
-              <SectionHeader title="Empresas" description="Cada empresa contiene sus proyectos, misiones, documentos y departamentos. Los workflows se comparten." action={<button className="primary-btn" onClick={() => openModal("company")}>Nueva empresa</button>} />
+              <SectionHeader title="Empresas" description="Organiza cada equipo y proyecto en su propio espacio. Los workflows se comparten." action={<button className="primary-btn" onClick={() => openModal("company")}>Nueva empresa</button>} />
               <div className="stack-list">
                 {companies.map((item) => (
                   <button key={item.id} className={`stack-item ${item.id === company?.id ? "selected" : ""}`} onClick={() => openCompany(item.id)}>
@@ -517,7 +562,7 @@ export function OperatingConsole() {
 
           {view === "company" && (
             <>
-              <SectionHeader title={company?.name ?? "Empresa"} description={company?.description || "Workspace de empresa con sus propios datos."} />
+              <SectionHeader title={company?.name ?? "Empresa"} description={company?.description || "Todo el trabajo de esta empresa, en un solo espacio."} />
               <div className="company-overview-strip">
                 <button onClick={() => navigate("projects")}><span>Proyectos</span><strong>{projects.length}</strong><small>Ver proyectos</small></button>
                 <button onClick={() => navigate("missions")}><span>Misiones</span><strong>{missions.length}</strong><small>Ver misiones</small></button>
