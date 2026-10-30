@@ -62,6 +62,7 @@ export type Client = {
   contactEmail: string;
   contactPhone: string;
   demo?: boolean;
+  brandGuide?: BrandGuide;
 };
 
 export type ProjectTask = {
@@ -79,4 +80,41 @@ export type ProjectDetails = {
   notes?: string;
   tasks?: ProjectTask[];
   updatedAt?: string;
+};
+
+/** Stored locally in the public demo; these fields are not an audit log. */
+export type BrandColor = {
+  id: string;
+  name: string;
+  role: "primary" | "secondary" | "accent" | "neutral" | "background";
+  hex: string;
+  pantone: string;
+  cmyk: string;
+  approved: boolean;
+};
+
+export type BrandLogo = {
+  id: string;
+  name: string;
+  variant: "primary" | "horizontal" | "vertical" | "monochrome" | "inverse" | "icon" | "other";
+  background: "light" | "dark" | "any";
+  usage: string;
+  url: string;
+  dataUrl?: string;
+  fileName?: string;
+  approved: boolean;
+};
+
+export type BrandGuide = {
+  colors: BrandColor[];
+  logos: BrandLogo[];
+  primaryFont: string;
+  secondaryFont: string;
+  toneOfVoice: string;
+  dos: string;
+  donts: string;
+  notes: string;
+  guidelineUrl: string;
+  reviewedBy: string;
+  reviewedAt?: string;
 };

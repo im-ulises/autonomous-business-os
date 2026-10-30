@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, BriefcaseBusiness, CalendarDays, Check, CheckCircle2, ChevronDown, Circle, Clock3, ContactRound, ExternalLink, FolderKanban, GripVertical, LayoutGrid, List, Plus, Search, SlidersHorizontal, Trash2, UserRound, Users, X } from "lucide-react";
 import type { Client, Company, Mission, Project, ProjectDetails, ProjectPriority, ProjectTask } from "@/lib/types";
+import { BrandSheet } from "@/app/components/BrandSheet";
 
 const STAGES: { key: Project["stage"]; name: string; hint: string }[] = [
   { key: "idea", name: "Ideas", hint: "Por definir" },
@@ -56,6 +57,7 @@ export function ProjectManager({
   const [query, setQuery] = useState("");
   const [heat, setHeat] = useState<ProjectPriority | "all">("all");
   const [clientEditor, setClientEditor] = useState(false);
+  const [brandClient, setBrandClient] = useState<Client | null>(null);
   const [clientDraft, setClientDraft] = useState<Client>(EMPTY_CLIENT);
   const [taskDraft, setTaskDraft] = useState("");
   const [noteDraft, setNoteDraft] = useState("");
@@ -95,6 +97,14 @@ export function ProjectManager({
   function startClientEdit(value?: Client) {
     setClientDraft(value ? { ...value } : { ...EMPTY_CLIENT, id: id(), companyId: company?.id ?? "" });
     setClientEditor(true);
+  }
+  function openBrandSheet(value: Client) {
+    setClientEditor(false);
+    setBrandClient(value);
+  }
+  function saveBrandSheet(value: Client) {
+    onSaveClient(value);
+    setBrandClient(value);
   }
   function saveClient(event: React.FormEvent) {
     event.preventDefault();
@@ -232,7 +242,8 @@ export function ProjectManager({
                 {client.contactEmail && <div className="pm-contact-field"><ContactRound size={14}/><a href={"mailto:" + client.contactEmail}>{client.contactEmail}</a></div>}
                 {client.contactPhone && <div className="pm-contact-field"><ContactRound size={14}/>{client.contactPhone}</div>}
                 {safeUrl(client.website) && <a className="pm-client-website" href={safeUrl(client.website)} target="_blank" rel="noopener noreferrer">Sitio del cliente <ExternalLink size={13}/></a>}
-                <button className="pm-outline-action" onClick={() => startClientEdit(client)}>Editar ficha del cliente <ArrowUpRight size={14}/></button>
+                <button className="pm-outline-action" onClick={() => openBrandSheet(client)}>Abrir Brand Sheet <ArrowUpRight size={14}/></button>
+                <button className="pm-outline-action" onClick={() => startClientEdit(client)}>Editar datos del cliente <ArrowUpRight size={14}/></button>
               </div> : <p className="pm-placeholder">Vincula un cliente para tener su identidad y contactos aquí.</p>}
               <button className="pm-add-client" onClick={() => startClientEdit()}><Plus size={15}/> Nuevo cliente</button>
             </section>
@@ -301,18 +312,21 @@ export function ProjectManager({
             <h2>{item.name}</h2><span>{item.industry || "Sin industria"}</span>
             <p>{item.description || "Completa la descripción del cliente."}</p>
             <div className="pm-directory-bottom"><strong>{relatedProjects.length}</strong><span>{relatedProjects.length === 1 ? "proyecto vinculado" : "proyectos vinculados"}</span></div>
+            <div className="pm-brand-sheet-summary"><div className="pm-brand-dots">{(item.brandGuide?.colors ?? []).filter(color => color.approved).slice(0,5).map(color => <span key={color.id} style={{ background: color.hex }} title={color.name}/>)}</div><span>{(item.brandGuide?.colors ?? []).filter(color=>color.approved).length} colores · {(item.brandGuide?.logos ?? []).filter(logo=>logo.approved).length} logos</span></div>
+            <button type="button" className="pm-brand-open" onClick={() => openBrandSheet(item)}>Abrir Brand Sheet <ArrowUpRight size={15}/></button>
           </article>;
         })}
         {availableClients.length === 0 && <div className="pm-empty">Todavía no hay clientes. Crea uno para vincularlo a un proyecto.</div>}
       </div>}
       <p className="pm-footer-note">Vista de trabajo local · Los cambios se guardan en este navegador; no se presentan como actividad real de agentes.</p>
     </>}
+    {brandClient && !clientEditor && <BrandSheet key={brandClient.id} client={brandClient} onSave={saveBrandSheet} onClose={() => setBrandClient(null)}/>}
     {clientEditor && <div className="pm-dialog-overlay" onClick={event => {if(event.target === event.currentTarget) setClientEditor(false);}}>
       <form className="pm-dialog" onSubmit={saveClient}>
         <div className="pm-dialog-head"><div><span>MINI CRM</span><h2>{clients.some(item=>item.id===clientDraft.id) ? "Editar cliente" : "Nuevo cliente"}</h2><p>Información e identidad visual del cliente.</p></div><button type="button" aria-label="Cerrar" onClick={() => setClientEditor(false)}><X size={18}/></button></div>
         <label>Nombre del cliente<input required maxLength={90} value={clientDraft.name} onChange={event => setClientDraft({ ...clientDraft, name:event.target.value })} placeholder="Ej. Big Media"/></label>
         <label>Descripción<textarea rows={3} maxLength={500} value={clientDraft.description} onChange={event=>setClientDraft({ ...clientDraft, description:event.target.value })} placeholder="¿Qué hace este cliente?"/></label>
-        <div className="pm-form-grid"><label>Industria<input maxLength={100} value={clientDraft.industry} onChange={event=>setClientDraft({ ...clientDraft, industry:event.target.value })} placeholder="Publicidad"/></label><label>Color de marca<input type="color" value={clientDraft.brandColor} onChange={event=>setClientDraft({ ...clientDraft, brandColor:event.target.value })}/></label></div>
+        <div className="pm-form-grid"><label>Industria<input maxLength={100} value={clientDraft.industry} onChange={event=>setClientDraft({ ...clientDraft, industry:event.target.value })} placeholder="Publicidad"/></label><label>Color identificador de la ficha (no oficial)<input type="color" value={clientDraft.brandColor} onChange={event=>setClientDraft({ ...clientDraft, brandColor:event.target.value })}/></label></div>
         <label>Sitio web<input type="url" value={clientDraft.website} onChange={event=>setClientDraft({ ...clientDraft, website:event.target.value })} placeholder="https://..."/></label>
         <div className="pm-form-grid"><label>Contacto principal<input maxLength={90} value={clientDraft.contactName} onChange={event=>setClientDraft({ ...clientDraft, contactName:event.target.value })} placeholder="Sin registrar"/></label><label>Correo<input type="email" value={clientDraft.contactEmail} onChange={event=>setClientDraft({ ...clientDraft, contactEmail:event.target.value })} placeholder="nombre@empresa.com"/></label></div>
         <label>Teléfono<input type="tel" value={clientDraft.contactPhone} onChange={event=>setClientDraft({ ...clientDraft, contactPhone:event.target.value })} placeholder="Sin registrar"/></label>
