@@ -515,3 +515,250 @@ button { cursor: pointer; }
 .table-row-link{width:100%;border-left:0;border-right:0;border-top:0;border-radius:0;background:transparent;color:inherit;text-align:left}
 .table-row-link:hover{background:var(--panel-2)}
 @media(max-width:640px){.company-overview-strip{grid-template-columns:1fr}.company-tabs{gap:16px}.workflow-reuse-bar{align-items:stretch;flex-direction:column}}
+
+
+/* Sana-inspired UI direction, applied to original Autonomous OS components.
+   Original branding, data models and interactions are retained. */
+.sana-shell {
+  --bg:#fcfcfb; --panel:#fff; --panel-2:#f7f7f6; --line:#ececeb;
+  --text:#1d1d1f; --muted:#77777b; --accent:#29292d;
+  --green:#1c9067; --amber:#956321; --blue:#4940a7;
+  --shadow:none;
+  background:#fbfbfa; color:var(--text);
+  font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+}
+.sana-shell .simple-sidebar {
+  width:252px; padding:24px 15px 18px;
+  background:#f3f3f2; border-right:1px solid #ededec;
+  color:#333336; backdrop-filter:none; z-index:30;
+}
+.sana-shell .simple-brand{padding:0 11px 8px; gap:11px;}
+.sana-shell .brand-dot{width:29px;height:29px;background:#1b1b1c;color:white;border-radius:9px;}
+.sana-shell .simple-brand strong{font-size:14px;letter-spacing:-.4px;font-weight:700;}
+.sana-shell .simple-brand small{font-size:11px;color:#9a9a9e;margin-top:2px;}
+.sana-shell .company-switch{
+  background:#fff; border:1px solid #e8e8e7; border-radius:11px;
+  margin:10px 0 17px; padding:11px 12px; box-shadow:0 1px 2px #00000006;
+  color:#252526;
+}
+.sana-shell .company-switch .label{font-size:10px;letter-spacing:.01em;color:#97979a;}
+.sana-shell .company-switch strong{font-size:12px;font-weight:600;}
+.sana-shell .company-switch:hover{background:#fff;border-color:#dadada;}
+.sana-shell .company-menu{gap:4px;margin-top:-13px;margin-bottom:10px;}
+.sana-shell .company-option{background:#fff;color:#222;border-color:#ebebeb;padding:7px 9px;border-radius:8px;}
+.sana-shell .company-option.active{background:#e8e8e9;border-color:#d8d8d9;}
+.sana-shell .company-option small{color:#818185;}
+.sana-shell .company-option span{background:#e8e7f5;color:#51459f;}
+.sana-shell .sana-side-label,.sana-shell .sana-spaces-heading{
+  color:#a0a0a1; font-size:10px;letter-spacing:.075em;font-weight:650;
+  padding:5px 14px 8px;display:flex;justify-content:space-between;align-items:center;
+}
+.sana-shell .simple-nav{gap:2px;}
+.sana-shell .simple-nav button{
+  min-height:36px;padding:8px 12px;background:transparent;border:0;border-radius:9px;
+  color:#5d5d61;font-size:12.5px;font-weight:500;
+}
+.sana-shell .simple-nav button svg{stroke-width:1.7;color:#79797b;}
+.sana-shell .simple-nav button:hover{background:#e8e8e7;color:#2d2d2f;}
+.sana-shell .simple-nav button.active{background:#e5e5e4;color:#1e1e20;border:0;font-weight:650;}
+.sana-shell .simple-nav button.active svg{color:#2e2e31;}
+.sana-shell .sana-side-spaces{margin-top:23px;display:grid;gap:1px;}
+.sana-shell .sana-spaces-heading button{background:transparent;border:0;color:#89898b;padding:2px;display:grid;place-items:center;}
+.sana-shell .sana-side-spaces>button{
+  color:#69696d;background:transparent;border:0;border-radius:8px;display:flex;align-items:center;gap:12px;
+  padding:9px 12px;text-align:left;font-size:12px;
+}
+.sana-shell .sana-side-spaces>button:hover,.sana-shell .sana-side-spaces>button.selected{background:#e8e8e7;color:#222;}
+.sana-shell .sana-space-dot{width:8px;height:8px;flex:none;border-radius:3px;}
+.sana-shell .simple-sidebar-footer{gap:5px;border-top:1px solid #e6e6e5;padding-top:10px;}
+.sana-shell .sana-theme-toggle{
+  border:0;background:transparent;color:#6c6c70;padding:9px 12px;display:flex;align-items:center;gap:12px;
+  text-align:left;border-radius:8px;font-size:12px;
+}
+.sana-shell .sana-theme-toggle:hover{background:#e8e8e7;}
+.sana-shell .demo-toggle{color:#88888c;font-size:11px;padding:6px 12px;}
+.sana-shell .demo-toggle input{accent-color:#313133;}
+.sana-shell .status-mini{padding:7px 12px;border:0;background:transparent;font-size:11px;color:#8b8b8e;}
+.sana-shell .simple-main{min-width:0;background:#fcfcfb;}
+.sana-shell .simple-topbar{
+  height:64px;padding:0 34px;border-bottom:1px solid #f0f0ef;background:#fcfcfb;
+  backdrop-filter:none;
+}
+.sana-shell .search-btn{
+  max-width:330px;flex:1;padding:10px 12px;background:#f4f4f3;border:1px solid #ededec;color:#757578;
+  border-radius:10px;min-height:36px;font-size:11.5px;
+}
+.sana-shell .search-btn:hover{background:#eeeeed;}
+.sana-shell .search-btn span{color:#858588;}
+.sana-shell .search-btn kbd{border:1px solid #e5e5e4;background:#fff;color:#88888a;border-radius:6px;}
+.sana-shell .topbar-actions .secondary-btn{background:#fff;color:#4b4b4d;border-color:#e9e9e8;}
+.sana-shell .primary-btn{
+  background:#222325;color:#fff;border:1px solid #222325;font-weight:550;border-radius:10px;
+  box-shadow:none;letter-spacing:-.05px;
+}
+.sana-shell .primary-btn:hover{background:#3b3b3d;}
+.sana-shell .secondary-btn,.sana-shell .icon-btn{
+  background:#fff;color:#38383c;border-color:#e6e6e5;border-radius:10px;font-weight:500;
+}
+.sana-shell .secondary-btn:hover,.sana-shell .icon-btn:hover{background:#f5f5f3;}
+.sana-shell .simple-content{
+  width:100%;max-width:1280px;margin:0 auto;padding:32px 46px 60px;gap:19px;
+}
+.sana-shell .sana-home-hero{max-width:1040px;margin:0 auto 23px;padding:50px 0 14px;}
+.sana-shell .sana-greeting-icon{
+  width:36px;height:36px;border:1px solid #ececec;background:#fff;color:#222;border-radius:12px;
+  display:grid;place-items:center;margin-bottom:25px;box-shadow:0 1px 3px #00000008;
+}
+.sana-shell .sana-home-hero h1{font-size:clamp(34px,4vw,51px);line-height:1.13;font-weight:650;letter-spacing:-2.4px;margin:0 0 9px;}
+.sana-shell .sana-home-hero>p{font-size:23px;color:#b4b4b5;margin:0 0 33px;letter-spacing:-.8px;}
+.sana-shell .sana-command-input{
+  width:100%;max-width:820px;height:66px;border:1px solid #e4e4e3;background:#fff;border-radius:18px;
+  padding:10px;display:flex;align-items:center;gap:12px;box-shadow:0 3px 18px #17171708;
+}
+.sana-shell .sana-command-plus{background:#f6f6f5;border:0;border-radius:10px;width:41px;height:41px;color:#5e5e61;display:grid;place-items:center;}
+.sana-shell .sana-command-placeholder{background:transparent;border:0;min-width:0;flex:1;text-align:left;color:#a4a4a5;font-size:13px;}
+.sana-shell .sana-command-send{border:0;background:#27272a;color:#fff;border-radius:11px;width:39px;height:39px;display:grid;place-items:center;}
+.sana-shell .sana-command-send:hover{background:#48484b;}
+.sana-shell .sana-suggestion-title{margin:31px 0 12px;display:flex;gap:12px;align-items:center;justify-content:space-between;max-width:100%;}
+.sana-shell .sana-suggestion-title span:first-child{font-weight:600;font-size:12px;color:#333;}
+.sana-shell .sana-suggestion-title span:last-child{font-size:11px;color:#acacaf;}
+.sana-shell .sana-suggestion-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;}
+.sana-shell .sana-suggestion{
+  border:0;border-radius:17px;min-height:184px;padding:20px;text-align:left;display:flex;flex-direction:column;
+  justify-content:space-between;align-items:flex-start;position:relative;overflow:hidden;transition:transform .15s ease,box-shadow .15s ease;
+}
+.sana-shell .sana-suggestion:hover{transform:translateY(-2px);box-shadow:0 10px 20px #1616160b;}
+.sana-shell .sana-suggestion-lilac{background:#ece7f1;color:#322b3b;}
+.sana-shell .sana-suggestion-blue{background:#ddedf7;color:#263e54;}
+.sana-shell .sana-suggestion-sand{background:#eee9df;color:#51463b;}
+.sana-shell .sana-suggestion-meta{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:650;letter-spacing:.055em;opacity:.7;}
+.sana-shell .sana-suggestion strong{font-size:20px;line-height:1.2;font-weight:650;letter-spacing:-.7px;max-width:270px;}
+.sana-shell .sana-suggestion-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;font-size:11px;font-weight:600;}
+.sana-shell .sana-dashboard-kicker{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:10px 0 -3px;padding-top:4px;}
+.sana-shell .sana-dashboard-kicker h2{font-size:17px;font-weight:650;letter-spacing:-.3px;margin:0;}
+.sana-shell .sana-dashboard-kicker p{font-size:11px;color:#a7a7a9;margin:0;}
+.sana-shell .section-header-simple h1{font-size:30px;letter-spacing:-.85px;font-weight:650;}
+.sana-shell .section-header-simple p{color:#858587;font-size:12.5px;line-height:1.6;margin-top:7px;}
+.sana-shell .card{background:#fff;border:1px solid #ebebea;border-radius:15px;padding:21px;box-shadow:none;}
+.sana-shell .focus-card h2{font-size:21px;letter-spacing:-.6px;font-weight:650;line-height:1.3;}
+.sana-shell .focus-card p,.sana-shell .workflow-card-simple p{color:#88888a;}
+.sana-shell .card-topline{color:#a4a4a6;font-size:10px;letter-spacing:.035em;}
+.sana-shell .summary-row{border-color:#f0f0ef;color:#777779;font-size:12px;}
+.sana-shell .summary-row strong{color:#252525;font-weight:650;}
+.sana-shell .block-heading h3{font-size:13px;font-weight:650;}
+.sana-shell .shortcut-list{gap:6px;}
+.sana-shell .shortcut-list button{background:#fafafa;border:1px solid #f0f0ef;color:#535356;border-radius:9px;font-size:12px;}
+.sana-shell .shortcut-list button:hover{background:#efefee;}
+.sana-shell .table-row{border-color:#f0f0ef;color:#555557;font-size:12px;}
+.sana-shell .table-row.table-head{color:#ababac;font-size:10px;font-weight:550;}
+.sana-shell .table-row strong{color:#242426;font-weight:600;font-size:12px;}
+.sana-shell .table-row small{color:#959597;font-size:11px;}
+.sana-shell .table-row-link{border:0;border-bottom:1px solid #f0f0ef;background:transparent;color:inherit;width:100%;text-align:left;}
+.sana-shell .table-row-link:hover{background:#f9f9f8;}
+.sana-shell .stack-item{
+  background:#fff;color:#252525;border:1px solid #ededec;border-radius:13px;box-shadow:none;
+  padding:17px 19px;
+}
+.sana-shell .stack-item.selected{background:#f9f9f9;border-color:#d8d8d8;}
+.sana-shell .stack-item:hover{background:#f8f8f8;}
+.sana-shell .stack-item p{color:#88888a;font-size:11.5px;}
+.sana-shell .avatar-box{background:#eeeaf3;color:#62558a;border-radius:10px;}
+.sana-shell .ui-badge{
+  border:0;background:#f3f3f2;color:#666668;border-radius:7px;padding:6px 9px;font-size:10px;font-weight:550;
+}
+.sana-shell .ui-badge-blue{background:#e9e9f8;color:#5952a3;}
+.sana-shell .ui-badge-amber{background:#fff3db;color:#986b23;}
+.sana-shell .ui-badge-green{background:#dff5e8;color:#29774f;}
+.sana-shell .workspace-breadcrumb{font-size:11px;color:#a1a1a3;}
+.sana-shell .workspace-breadcrumb button{color:#7a7a7d;}
+.sana-shell .company-tabs{border-bottom:1px solid #ebebeb;gap:10px;overflow-x:auto;}
+.sana-shell .company-tabs button{font-size:12px;padding:11px 12px;color:#929295;background:transparent;border:0;border-bottom:2px solid transparent;white-space:nowrap;}
+.sana-shell .company-tabs button.active{font-weight:650;color:#242426;border-bottom-color:#252525;background:transparent;}
+.sana-shell .company-overview-strip{border:1px solid #ebebea;border-radius:15px;overflow:hidden;background:#fff;}
+.sana-shell .company-overview-strip button{background:#fff;border-color:#efefef;color:#7d7d7f;}
+.sana-shell .company-overview-strip button strong{color:#222;}
+.sana-shell .company-overview-strip button small{color:#aaa;}
+.sana-shell .simple-select,.sana-shell .modal-card-simple input,.sana-shell .modal-card-simple textarea,.sana-shell .modal-card-simple select{
+  background:#fff;color:#242426;border-color:#e1e1e1;
+}
+.sana-shell .docs-nav-simple button{background:#fff;color:#444;border:0;border-radius:8px;}
+.sana-shell .docs-nav-simple button.active{background:#f1f1f0;border-color:transparent;}
+.sana-shell .docs-nav-simple small,.sana-shell .docs-none{color:#919193;}
+.sana-shell .docs-group-label{color:#aeaeaf;font-size:10px;letter-spacing:.07em;}
+.sana-shell .docs-reader-simple{background:#fff;}
+.sana-shell .docs-reader-head{border-color:#ededec;}
+.sana-shell .tab-switch-simple button{border-color:#eaeaea;background:#fff;color:#999;}
+.sana-shell .tab-switch-simple button.active{background:#f2f2f1;color:#242424;}
+.sana-shell .markdown-body-simple{color:#363638;}
+.sana-shell .markdown-body-simple h1,.sana-shell .markdown-body-simple h2,.sana-shell .markdown-body-simple h3{color:#161618;}
+.sana-shell .markdown-body-simple code,.sana-shell .markdown-body-simple pre,.sana-shell .markdown-source-simple{background:#f5f5f4;color:#343436;border-color:#eeeeed;}
+.sana-shell .markdown-body-simple td,.sana-shell .markdown-body-simple th{border-color:#eeeeed;}
+.sana-shell .workflow-card-simple ol{color:#777;}
+.sana-shell .workflow-reuse-bar{background:#f9f9f9;border-color:#eeeeed;color:#777;}
+.sana-shell .stat-card strong{color:#333;}
+.sana-shell .stat-card span{color:#818185;}
+.sana-shell .system-row-simple{color:#555;border-color:#eee;}
+.sana-shell .system-note{color:#959598;}
+.sana-shell .overlay,.sana-shell .overlay-panel{background:#15151550;}
+.sana-shell .search-panel,.sana-shell .modal-card-simple{background:#fff;border-color:#e6e6e6;color:#242426;box-shadow:0 20px 80px #0002;}
+.sana-shell .search-head{border-color:#eee;}
+.sana-shell .search-head input{color:#222;}
+.sana-shell .search-results button{color:#444;}
+.sana-shell .search-results button:hover{background:#f7f7f7;border-color:#eeeeee;}
+.sana-shell .search-results small{color:#aaa;}
+.sana-shell .modal-card-simple label{color:#555;}
+.sana-shell .modal-head-simple p{color:#929292;}
+.sana-shell .modal-card-simple .secondary-btn{background:#fff;color:#444;}
+.sana-shell .empty-state-simple p{color:#999;}
+.sana-shell .text-btn{color:#555;}
+
+/* Sana also offers a dark workspace theme. This optional mode keeps the same layout. */
+.sana-shell.theme-dark{
+  --bg:#171719; --panel:#242426; --panel-2:#2d2d2f; --line:#38383a; --text:#f3f3f3;
+  --muted:#a4a4a7; --accent:#d7d7e4;color:#f4f4f4;background:#171719;
+}
+.sana-shell.theme-dark .simple-sidebar{background:#222224;border-right-color:#303032;color:#f2f2f2;}
+.sana-shell.theme-dark .simple-main,.sana-shell.theme-dark .simple-topbar{background:#171719;border-color:#2e2e30;}
+.sana-shell.theme-dark .card,.sana-shell.theme-dark .stack-item,.sana-shell.theme-dark .docs-reader-simple,.sana-shell.theme-dark .company-overview-strip,.sana-shell.theme-dark .company-overview-strip button{background:#222224;border-color:#343437;}
+.sana-shell.theme-dark .company-switch,.sana-shell.theme-dark .company-option,.sana-shell.theme-dark .secondary-btn,.sana-shell.theme-dark .icon-btn{background:#2b2b2d;border-color:#3a3a3d;color:#eee;}
+.sana-shell.theme-dark .simple-nav button,.sana-shell.theme-dark .sana-side-spaces>button,.sana-shell.theme-dark .sana-theme-toggle{color:#b6b6b8;}
+.sana-shell.theme-dark .simple-nav button.active,.sana-shell.theme-dark .sana-side-spaces>button.selected{background:#38383b;color:#f5f5f5;}
+.sana-shell.theme-dark .simple-nav button:hover,.sana-shell.theme-dark .sana-side-spaces>button:hover{background:#303033;color:#fff;}
+.sana-shell.theme-dark .search-btn,.sana-shell.theme-dark .shortcut-list button{background:#2a2a2c;border-color:#353537;}
+.sana-shell.theme-dark .sana-command-input,.sana-shell.theme-dark .search-panel,.sana-shell.theme-dark .modal-card-simple{background:#29292b;border-color:#414143;color:#eee;}
+.sana-shell.theme-dark .sana-command-plus{background:#38383a;color:#eee;}
+.sana-shell.theme-dark .sana-home-hero h1,.sana-shell.theme-dark .section-header-simple h1,.sana-shell.theme-dark .table-row strong,.sana-shell.theme-dark .summary-row strong,.sana-shell.theme-dark .block-heading h3,.sana-shell.theme-dark .stack-item,.sana-shell.theme-dark .docs-reader-head strong,.sana-shell.theme-dark .company-overview-strip button strong{color:#f4f4f4;}
+.sana-shell.theme-dark .sana-greeting-icon{background:#323235;color:#ddd;border-color:#404044;}
+.sana-shell.theme-dark .sana-dashboard-kicker h2{color:#eee;}
+.sana-shell.theme-dark .table-row,.sana-shell.theme-dark .summary-row,.sana-shell.theme-dark .company-tabs,.sana-shell.theme-dark .system-row-simple{border-color:#3a3a3c;color:#bbb;}
+.sana-shell.theme-dark .company-tabs button.active{color:#eee;border-color:#eee;}
+.sana-shell.theme-dark .docs-nav-simple button{background:transparent;color:#bdbdc0;}
+.sana-shell.theme-dark .docs-nav-simple button.active{background:#38383b;}
+.sana-shell.theme-dark .markdown-body-simple,.sana-shell.theme-dark .markdown-body-simple h1,.sana-shell.theme-dark .markdown-body-simple h2{color:#e8e8e9;}
+.sana-shell.theme-dark .markdown-body-simple pre,.sana-shell.theme-dark .markdown-source-simple{background:#151518;border-color:#353538;color:#e5e5e7;}
+.sana-shell.theme-dark .sana-suggestion-lilac{background:#43354e;color:#f6eaff;}
+.sana-shell.theme-dark .sana-suggestion-blue{background:#294659;color:#e0f2ff;}
+.sana-shell.theme-dark .sana-suggestion-sand{background:#514333;color:#fff0de;}
+.sana-shell.theme-dark .primary-btn{background:#eee;color:#222;border-color:#eee;}
+.sana-shell.theme-dark .sana-command-send{background:#eee;color:#222;}
+.sana-shell.theme-dark .ui-badge{background:#3c3c40;color:#dedee0;}
+.sana-shell.theme-dark .modal-card-simple input,.sana-shell.theme-dark .modal-card-simple select,.sana-shell.theme-dark .modal-card-simple textarea{background:#252527;color:#f4f4f4;border-color:#444;}
+.sana-shell.theme-dark .sana-suggestion-title span:first-child{color:#ddd;}
+.sana-shell.theme-dark .sana-side-label,.sana-shell.theme-dark .sana-spaces-heading{color:#909094;}
+@media(max-width:1100px){
+  .sana-shell .simple-content{padding:27px 27px 50px;}
+  .sana-shell .sana-suggestion-grid{gap:9px;}
+  .sana-shell .sana-suggestion{min-height:178px;padding:17px;}
+  .sana-shell .sana-suggestion strong{font-size:17px;}
+}
+@media(max-width:860px){
+  .sana-shell .simple-sidebar{z-index:70;width:min(310px,88vw);position:fixed;}
+  .sana-shell .simple-topbar{padding:0 16px;}
+  .sana-shell .simple-content{padding:23px 16px 50px;}
+  .sana-shell .sana-home-hero{padding:35px 0 10px;}
+  .sana-shell .sana-home-hero h1{font-size:35px;letter-spacing:-1.5px;}
+  .sana-shell .sana-home-hero>p{font-size:17px;}
+  .sana-shell .sana-suggestion-grid{grid-template-columns:1fr;}
+  .sana-shell .sana-suggestion{min-height:138px;}
+  .sana-shell .sana-dashboard-kicker{flex-direction:column;align-items:flex-start;}
+}
