@@ -434,7 +434,7 @@ export function OperatingConsole() {
           </div>
         </header>
 
-        <section className="simple-content">
+        <section className={`simple-content ${view === "now" ? "sana-home-content" : "sana-workspace-content"}`}>
           {COMPANY_VIEWS.includes(view) && (
             <>
               <div className="workspace-breadcrumb">
@@ -447,97 +447,71 @@ export function OperatingConsole() {
               </nav>
             </>
           )}
+
           {view === "now" && (
-            <>
-              <div className="sana-home-hero">
-                <div className="sana-greeting-icon"><Sparkles size={21}/></div>
+            <div className="sana-home-stack">
+              <section className="sana-home-hero">
+                <div className="sana-greeting-icon"><Sparkles size={20}/></div>
                 <h1>Hola, ¿en qué trabajamos hoy?</h1>
-                <p>Todo tu trabajo y tus empresas, en un solo lugar.</p>
+                <p>Un espacio para pensar, crear y avanzar.</p>
+
+                <div className="sana-suggestion-title">
+                  <span>Sugerencias</span>
+                  <span>Elige por dónde empezar</span>
+                </div>
+                <div className="sana-suggestion-grid">
+                  <button className="sana-suggestion sana-suggestion-lilac" onClick={() => openModal("mission")}>
+                    <span className="sana-suggestion-meta"><Sparkles size={15}/> CREAR</span>
+                    <strong>Convierte una idea en una misión.</strong>
+                    <span className="sana-suggestion-bottom">Nueva misión <ArrowUpRight size={17}/></span>
+                  </button>
+                  <button className="sana-suggestion sana-suggestion-blue" onClick={() => navigate("companies")}>
+                    <span className="sana-suggestion-meta"><Building2 size={15}/> ORGANIZAR</span>
+                    <strong>Continúa el trabajo en tus empresas.</strong>
+                    <span className="sana-suggestion-bottom">Abrir empresas <ArrowUpRight size={17}/></span>
+                  </button>
+                  <button className="sana-suggestion sana-suggestion-sand" onClick={() => navigate("workflows")}>
+                    <span className="sana-suggestion-meta"><Workflow size={15}/> AUTOMATIZAR</span>
+                    <strong>Empieza con un proceso reutilizable.</strong>
+                    <span className="sana-suggestion-bottom">Explorar workflows <ArrowUpRight size={17}/></span>
+                  </button>
+                </div>
+
                 <div className="sana-command-input">
                   <button className="sana-command-plus" aria-label="Nueva misión" title="Nueva misión" onClick={() => openModal("mission")}><Plus size={19}/></button>
                   <button className="sana-command-placeholder" onClick={() => openModal("mission")}>Pide un resultado o describe una misión...</button>
                   <button className="sana-command-send" aria-label="Crear misión" onClick={() => openModal("mission")}><ArrowUpRight size={18}/></button>
                 </div>
-                <div className="sana-suggestion-title"><span>Sugerencias</span><span>Empieza desde aquí</span></div>
-                <div className="sana-suggestion-grid">
-                  <button className="sana-suggestion sana-suggestion-lilac" onClick={() => openModal("mission")}>
-                    <span className="sana-suggestion-meta"><Sparkles size={16}/> PARA EMPEZAR</span>
-                    <strong>¿Qué podemos hacer por tu empresa hoy?</strong>
-                    <span className="sana-suggestion-bottom">Crear una misión <ArrowUpRight size={17}/></span>
+                <p className="sana-command-help">Los borradores se guardan localmente. No se ejecutan agentes desde esta versión.</p>
+              </section>
+
+              <section className="sana-home-overview">
+                <div className="sana-activity-heading">
+                  <div>
+                    <h2>Tu espacio de trabajo</h2>
+                    <p>Un vistazo a lo que tienes en marcha</p>
+                  </div>
+                  <button onClick={() => navigate("companies")}>Ver empresas <ArrowUpRight size={15}/></button>
+                </div>
+                <div className="sana-activity-list">
+                  <button className="sana-activity-row" onClick={() => focusCompany ? openCompany(focusCompany.id, "missions") : navigate("companies")}>
+                    <span className="sana-activity-icon sana-activity-icon-lilac"><Bot size={17}/></span>
+                    <span className="sana-activity-copy"><strong>{focusMission?.title ?? "Aún no hay misiones"}</strong><small>{focusCompany?.name ?? "Crea una misión para empezar"} · {focusMission?.demo ? "Ejemplo" : "Borrador local"}</small></span>
+                    <span className="sana-activity-meta">Misiones <ArrowUpRight size={15}/></span>
                   </button>
-                  <button className="sana-suggestion sana-suggestion-blue" onClick={() => navigate("companies")}>
-                    <span className="sana-suggestion-meta"><Building2 size={16}/> WORKSPACES</span>
-                    <strong>Un espacio para cada empresa.</strong>
-                    <span className="sana-suggestion-bottom">Explorar empresas <ArrowUpRight size={17}/></span>
+                  <button className="sana-activity-row" onClick={() => navigate("companies")}>
+                    <span className="sana-activity-icon sana-activity-icon-blue"><FolderKanban size={17}/></span>
+                    <span className="sana-activity-copy"><strong>{globalOpenProjects} proyectos abiertos</strong><small>Distribuidos entre {companies.length} empresas</small></span>
+                    <span className="sana-activity-meta">Proyectos <ArrowUpRight size={15}/></span>
                   </button>
-                  <button className="sana-suggestion sana-suggestion-sand" onClick={() => navigate("workflows")}>
-                    <span className="sana-suggestion-meta"><Workflow size={16}/> PLANTILLAS</span>
-                    <strong>Reutiliza procesos sin comenzar de cero.</strong>
-                    <span className="sana-suggestion-bottom">Ver workflows <ArrowUpRight size={17}/></span>
+                  <button className="sana-activity-row" onClick={() => navigate("systems")}>
+                    <span className="sana-activity-icon sana-activity-icon-sand"><ShieldCheck size={17}/></span>
+                    <span className="sana-activity-copy"><strong>Crobi {crobi?.connected ? "conectado" : "sin conectar"}</strong><small>{globalAssignedMissions} misiones asignadas · Ver conexiones y permisos</small></span>
+                    <span className="sana-activity-meta">Sistema <ArrowUpRight size={15}/></span>
                   </button>
                 </div>
-              </div>
-              <div className="sana-dashboard-kicker"><h2>Tu espacio de trabajo</h2><p>Resumen global · Datos de demostración cuando están activados</p></div>
-
-              <div className="focus-grid">
-                <section className="card focus-card">
-                  <div className="card-topline">Misión por preparar · No es una aprobación pendiente</div>
-                  <h2>{focusMission?.title ?? "Aún no hay misiones"}</h2>
-                  <p>{focusMission?.outcome ?? "Crea una misión para definir el siguiente resultado esperado."}</p>
-                  <div className="focus-meta">
-                    <Badge tone="blue">{focusCompany?.name ?? "Sin empresa"}</Badge>
-                    <Badge>{focusMission ? ASSIGNEE_LABEL[focusMission.assignee] : "Sin asignar"}</Badge>
-                    <Badge tone={focusMission?.demo ? "amber" : "default"}>{focusMission?.demo ? "Ejemplo" : "Borrador local"}</Badge>
-                  </div>
-                  <div className="focus-actions">
-                    <button className="primary-btn" onClick={() => focusCompany ? openCompany(focusCompany.id, "missions") : navigate("companies")}>Ver misión en su empresa</button>
-                    <button className="secondary-btn" onClick={() => navigate("companies")}>Abrir empresas</button>
-                  </div>
-                </section>
-
-                <section className="card summary-card">
-                  <div className="summary-row"><span>Empresas</span><strong>{companies.length}</strong></div>
-                  <div className="summary-row"><span>Proyectos abiertos</span><strong>{globalOpenProjects}</strong></div>
-                  <div className="summary-row"><span>Misiones asignadas</span><strong>{globalAssignedMissions}</strong></div>
-                  <div className="summary-row"><span>Crobi</span><strong>{crobi?.connected ? "Conectado" : "No conectado"}</strong></div>
-                </section>
-              </div>
-
-              <div className="two-panel-grid">
-                <section className="card">
-                  <div className="block-heading">
-                    <h3>Proyectos por empresa</h3>
-                    <button className="text-btn" onClick={() => navigate("companies")}>Ver empresas</button>
-                  </div>
-                  {allProjects.length === 0 ? (
-                    <EmptyState title="Sin proyectos" description="Abre una empresa y crea un proyecto." action={<button className="secondary-btn" onClick={() => navigate("companies")}>Abrir empresas</button>} />
-                  ) : (
-                    <div className="simple-table">
-                      <div className="table-row table-head"><span>Proyecto</span><span>Empresa</span><span>Estado</span></div>
-                      {allProjects.slice(0, 4).map(item => (
-                        <button className="table-row table-row-link" key={item.id} onClick={() => openCompany(item.companyId, "projects")}>
-                          <div><strong>{item.name}</strong><small>{item.description}</small></div>
-                          <span>{companies.find(c => c.id === item.companyId)?.name ?? "Empresa"}</span>
-                          <Badge>{STAGE_LABEL[item.stage]}</Badge>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </section>
-
-                <section className="card">
-                  <div className="block-heading">
-                    <h3>Atajos</h3>
-                  </div>
-                  <div className="shortcut-list">
-                    <button onClick={() => navigate("companies")}>Abrir una empresa</button>
-                    <button onClick={() => navigate("workflows")}>Workflows reutilizables</button>
-                    <button onClick={() => navigate("systems")}>Revisar conexión con Crobi</button>
-                    <button onClick={() => openModal("company")}>Crear nueva empresa</button>
-                  </div>
-                </section>
-              </div>
-            </>
+              </section>
+            </div>
           )}
 
           {view === "companies" && (
