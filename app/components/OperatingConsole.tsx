@@ -155,7 +155,7 @@ export function OperatingConsole() {
           <span><strong>{selectedCompany?.name || "Mi empresa"}</strong><small>Workspace de demostración</small></span>
           <ChevronDown size={15}/>
         </button>
-        <div className="sidebar-caption">NAVEGACIÓN</div>
+        <label className="nav-search-wrap"><Search size={15}/><input id="nav-search" aria-label="Buscar secciones" placeholder="Buscar secciones" value={search} onChange={(event) => setSearch(event.target.value)}/></label>
         <nav className="nav" aria-label="Navegación principal">
           {visibleNav.map(({ title, icon: Icon }) =>
             <button key={title} className={"nav-item " + (section === title ? "nav-active" : "")}
@@ -187,13 +187,13 @@ export function OperatingConsole() {
           <div className="eyebrow">AUTONOMOUS BUSINESS OS / V0.1</div>
           <div className="page-heading">
             <div>
-              <h1>{section === "Ahora" ? "Tu empresa. Bajo control." : section}</h1>
-              <p className="subtitle">{section === "Ahora" ? "Supervisa resultados, decisiones y misiones desde un solo lugar." : "Espacio de trabajo de demostración. Los cambios se guardan solo en este navegador."}</p>
+              <h1>{section === "Ahora" ? "Ahora" : section}</h1>
+              <p className="subtitle">{section === "Ahora" ? "Decisiones y trabajo de tus equipos, sin ruido." : "Espacio de trabajo de demostración. Los cambios se guardan solo en este navegador."}</p>
             </div>
             {(section === "Empresas" || section === "Proyectos" || section === "Misiones") &&
               <button className="primary-button" onClick={section === "Empresas" ? createCompany : section === "Proyectos" ? createProject : createMission}><Plus size={16}/> Crear {section === "Empresas" ? "empresa" : section === "Proyectos" ? "proyecto" : "misión"}</button>}
           </div>
-          <div className="notice"><ShieldCheck size={17}/><span>**Versión de demostración.** No hay agentes ejecutando tareas, información bancaria ni decisiones reales conectadas.</span></div>
+          <div className="notice"><ShieldCheck size={17}/><span>Vista de demostración · Los agentes aún no están conectados. No se ejecutan acciones externas.</span></div>
 
           {section === "Ahora" && <>
             <div className="metric-grid">
@@ -203,19 +203,19 @@ export function OperatingConsole() {
             </div>
             <div className="two-column">
               <section className="panel">
-                <div className="panel-heading"><div><h2>Requiere tu atención</h2><p>Las aprobaciones reales aparecerán al conectar Crobi.</p></div><CheckCheck size={18}/></div>
+                <div className="panel-heading"><div><h2>Decisiones</h2><p>Solo los asuntos que requieren tu aprobación.</p></div><CheckCheck size={18}/></div>
                 <div className="empty-state"><ShieldCheck size={24}/><strong>No hay decisiones conectadas</strong><span>Por seguridad, no inventamos aprobaciones ni actividad de agentes.</span></div>
               </section>
               <section className="panel">
-                <div className="panel-heading"><div><h2>Misiones de trabajo</h2><p>Borradores de ejemplo para organizar objetivos.</p></div><Bot size={18}/></div>
+                <div className="panel-heading"><div><h2>Misiones</h2><p>Resultados por entregar, sin tareas manuales.</p></div><Bot size={18}/></div>
                 {missions.map((mission) => <div className="list-row" key={mission.id}><span className="list-icon"><Bot size={16}/></span><span className="list-main"><strong>{mission.title}</strong><small>{mission.outcome}</small></span><span className="pill">{mission.status}</span></div>)}
                 <button className="text-button" onClick={() => setSection("Misiones")}>Ver todas las misiones <ArrowRight size={15}/></button>
               </section>
             </div>
             <section className="command-card">
               <div className="command-orb"><Command size={24}/></div>
-              <div><h2>Tu centro de mando</h2><p>Aquí podrás pedir resultados a los departamentos digitales. La ejecución llegará cuando conectemos Crobi con autorización.</p></div>
-              <button className="secondary-button" onClick={createMission}>Preparar misión <ArrowRight size={15}/></button>
+              <div><h2>¿Qué necesitas que haga tu equipo?</h2><p>Describe el resultado. Por ahora se guarda como misión local; no se inicia ningún agente.</p></div>
+              <button className="secondary-button" onClick={createMission}>Nueva misión <ArrowRight size={15}/></button>
             </section>
           </>}
 
