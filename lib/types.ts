@@ -44,4 +44,39 @@ export type Store = {
   projects: Project[];
   missions: Mission[];
   localDocs: LocalDoc[];
+  clients: Client[];
+  projectDetails: Record<string, ProjectDetails>;
+};
+
+export type ProjectPriority = "low" | "normal" | "high" | "critical";
+
+export type Client = {
+  id: string;
+  companyId: string;
+  name: string;
+  description: string;
+  industry: string;
+  brandColor: string;
+  website: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  demo?: boolean;
+};
+
+export type ProjectTask = {
+  id: string;
+  title: string;
+  done: boolean;
+};
+
+export type ProjectDetails = {
+  priority?: ProjectPriority;
+  stageOverride?: Project["stage"];
+  clientId?: string;
+  dueDate?: string;
+  brief?: string;
+  notes?: string;
+  tasks?: ProjectTask[];
+  updatedAt?: string;
 };
