@@ -28,7 +28,7 @@ function safeHttpsUrl(raw: string): string {
 }
 
 export function isApprovedLesson(lesson: DepartmentLesson) {
-  return lesson.status === "approved" && Boolean(lesson.reviewedBy.trim()) &&
+  return lesson.status === "approved" && Boolean(lesson.title.trim()) && Boolean(lesson.learning.trim()) && Boolean(lesson.reviewedBy.trim()) &&
     Boolean(lesson.evidenceUrl.trim()) && Boolean(safeHttpsUrl(lesson.evidenceUrl));
 }
 

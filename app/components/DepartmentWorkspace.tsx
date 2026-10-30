@@ -111,7 +111,7 @@ export function DepartmentWorkspace({ company, departments, brand, onSave }: Pro
   }
   function patchLesson(lid: string, p: Partial<DepartmentLesson>) {
     if (!current) return;
-    edit({ lessons: current.lessons.map(l => l.id === lid ? { ...l, ...p } : l) });
+    edit({ lessons: current.lessons.map(l => l.id === lid ? { ...l, ...p, status: "status" in p ? p.status ?? l.status : "draft" } : l) });
   }
   function download(kind: "yaml" | "md" | "json") {
     if (!current) return;
@@ -247,7 +247,7 @@ export function DepartmentWorkspace({ company, departments, brand, onSave }: Pro
           </>}
         </main>
       </div>
-      <p className="dc-footnote">Guardado localmente en este navegador. Evita datos secretos o personales; todavía no hay almacenamiento central ni historial de auditoría.</p>
+      <p className="dc-footnote">Guardado localmente en este navegador. Las aprobaciones declaradas aquí no verifican la identidad del revisor. Evita secretos o datos personales; no hay backend, permisos ni historial de auditoría central.</p>
     </>}
   </div>;
 }
