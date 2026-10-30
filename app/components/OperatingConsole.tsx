@@ -169,11 +169,11 @@ export function OperatingConsole() {
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        smoothChange(() => setSearchOpen(true));
+        setSearchOpen(true);
         setTimeout(() => searchRef.current?.focus(), 0);
       }
       if (event.key === "Escape") {
-        smoothChange(() => { setSearchOpen(false); setCompanyOpen(false); setModal(null); });
+        setSearchOpen(false); setCompanyOpen(false); setModal(null);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -302,7 +302,7 @@ export function OperatingConsole() {
   }
 
   function openModal(kind: "company" | "project" | "mission") {
-    smoothChange(() => setModal(kind));
+    setModal(kind);
     setName("");
     setDescription("");
     setProjectId("");
@@ -355,7 +355,7 @@ export function OperatingConsole() {
       setView("missions");
     }
 
-    smoothChange(() => setModal(null));
+    setModal(null);
   }
 
   function updateProjectStage(id: string, stage: Project["stage"]) {
@@ -489,7 +489,7 @@ export function OperatingConsole() {
           <button className="icon-btn mobile-only" onClick={() => setMobileOpen(true)} aria-label="Abrir menú">
             <Menu size={18} />
           </button>
-          <button className="search-btn" onClick={() => smoothChange(() => setSearchOpen(true))}>
+          <button className="search-btn" onClick={() => setSearchOpen(true)}>
             <Search size={16} />
             <span>Buscar en tu espacio de trabajo</span>
             <kbd>⌘K</kbd>
@@ -861,7 +861,7 @@ export function OperatingConsole() {
       {mobileOpen && <button className="overlay" aria-label="Cerrar menú" onClick={() => setMobileOpen(false)} />}
 
       {searchOpen && (
-        <div className="overlay-panel" onClick={(event) => { if (event.target === event.currentTarget) smoothChange(() => setSearchOpen(false)); }}>
+        <div className="overlay-panel" onClick={(event) => { if (event.target === event.currentTarget) setSearchOpen(false); }}>
           <div className="search-panel">
             <div className="search-head"><Command size={16} /><input ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar vista, proyecto o misión" /></div>
             <div className="search-results">
@@ -883,7 +883,7 @@ export function OperatingConsole() {
       )}
 
       {modal && (
-        <div className="overlay-panel" onClick={(event) => { if (event.target === event.currentTarget) smoothChange(() => setModal(null)); }}>
+        <div className="overlay-panel" onClick={(event) => { if (event.target === event.currentTarget) setModal(null); }}>
           <form className="modal-card-simple" onSubmit={saveModal}>
             <div className="modal-head-simple">
               <div>
@@ -894,7 +894,7 @@ export function OperatingConsole() {
                   {modal === "company" ? "Crea un workspace nuevo." : modal === "project" ? "Agrega un proyecto a la empresa actual." : "Define un resultado esperado."}
                 </p>
               </div>
-              <button type="button" className="icon-btn" onClick={() => smoothChange(() => setModal(null))}><X size={16} /></button>
+              <button type="button" className="icon-btn" onClick={() => setModal(null)}><X size={16} /></button>
             </div>
             <label>
               Nombre
@@ -922,7 +922,7 @@ export function OperatingConsole() {
               </>
             )}
             <div className="modal-actions-simple">
-              <button type="button" className="secondary-btn" onClick={() => smoothChange(() => setModal(null))}>Cancelar</button>
+              <button type="button" className="secondary-btn" onClick={() => setModal(null)}>Cancelar</button>
               <button type="submit" className="primary-btn">Guardar</button>
             </div>
           </form>
