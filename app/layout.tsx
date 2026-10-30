@@ -4,6 +4,7 @@ import "./globals.css";
 import "./project-manager.css";
 import "./brand-sheet.css";
 import "./motion.css";
+import "./company-brand.css";
 
 export const metadata: Metadata = {
   title: "Autonomous Business OS",

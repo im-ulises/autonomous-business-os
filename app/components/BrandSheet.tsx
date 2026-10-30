@@ -37,9 +37,9 @@ const logoSrc = (item: BrandLogo) => {
   return validUrl(item.url);
 };
 
-type Props = { client: Client; onSave: (client: Client) => void; onClose: () => void };
+type Props = { client: Client; onSave: (client: Client) => void; onClose: () => void; scope?: "client" | "company" };
 
-export function BrandSheet({ client, onSave, onClose }: Props) {
+export function BrandSheet({ client, onSave, onClose, scope = "client" }: Props) {
   const [guide, setGuide] = useState<BrandGuide>(() => ({
     ...EMPTY_GUIDE, ...client.brandGuide,
     colors: [...(client.brandGuide?.colors ?? [])],
@@ -90,7 +90,10 @@ export function BrandSheet({ client, onSave, onClose }: Props) {
     const exportData = {
       format: "autonomous-business-os.brand-sheet.v1",
       export_status: "local_editor_not_cryptographically_verified",
-      client: { id: client.id, companyId: client.companyId, name: client.name, description: client.description, industry: client.industry },
+      subject_type: scope,
+      ...(scope === "company"
+        ? { company: { id: client.id, name: client.name, description: client.description } }
+        : { client: { id: client.id, companyId: client.companyId, name: client.name, description: client.description, industry: client.industry } }),
       reviewed_manually_by: guide.reviewedBy || null,
       approved_colors: guide.colors.filter(item => item.approved).map(item => ({
         name: item.name, role: item.role, hex: toHex(item.hex),
@@ -144,7 +147,7 @@ export function BrandSheet({ client, onSave, onClose }: Props) {
       <header className="bs-topbar">
         <div className="bs-heading">
           <button type="button" className="bs-icon-btn" onClick={onClose} aria-label="Cerrar Brand Sheet"><ArrowLeft size={19}/></button>
-          <div><span>CLIENTE / IDENTIDAD DE MARCA</span><h2>{client.name} <small>Brand Sheet</small></h2></div>
+          <div><span>{scope === "company" ? "EMPRESA / IDENTIDAD CORPORATIVA" : "CLIENTE / IDENTIDAD DE MARCA"}</span><h2>{client.name} <small>Brand Sheet</small></h2></div>
         </div>
         <div className="bs-top-actions">
           <span className="bs-status">{approvedColors} colores · {approvedLogos} logos aprobados manualmente</span>
