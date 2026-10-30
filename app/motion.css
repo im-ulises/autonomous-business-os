@@ -1,0 +1,239 @@
+/*
+ * Autonomous Business OS — Motion system
+ * Referenced interaction hierarchy: Sana workspace/detail, Linear issue detail.
+ * Times are original implementation choices, not measured from Mobbin previews.
+ *
+ * Spatial movements: 4–12px. Durations: 150–280ms.
+ * Animations never communicate task completion or fake server progress.
+ */
+:root {
+  --motion-fast: 155ms;
+  --motion-standard: 215ms;
+  --motion-detail: 280ms;
+  --motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --motion-out: cubic-bezier(.2,.72,.25,1);
+}
+
+/* The chrome remains stationary while page content changes. */
+@supports (view-transition-name: workspace-chrome) {
+  .sana-shell .simple-sidebar { view-transition-name: workspace-sidebar; }
+  .sana-shell .simple-topbar { view-transition-name: workspace-topbar; }
+}
+::view-transition-old(workspace-sidebar),
+::view-transition-new(workspace-sidebar),
+::view-transition-old(workspace-topbar),
+::view-transition-new(workspace-topbar) {
+  animation-duration: 0.01ms;
+}
+::view-transition-old(root) {
+  animation: abo-view-out 135ms cubic-bezier(.4,0,1,1) both;
+}
+::view-transition-new(root) {
+  animation: abo-view-in 230ms var(--motion-ease) both;
+}
+@keyframes abo-view-out {
+  from { opacity:1; filter:blur(0); transform:translateY(0); }
+  to { opacity:.3; filter:blur(1px); transform:translateY(-4px); }
+}
+@keyframes abo-view-in {
+  from { opacity:0; filter:blur(1.2px); transform:translateY(7px); }
+  to { opacity:1; filter:blur(0); transform:translateY(0); }
+}
+
+/* Navigation focus and selected state — no jump in color or padding. */
+.sana-shell .simple-nav button,
+.sana-shell .sana-side-spaces>button,
+.sana-shell .company-tabs button,
+.sana-shell .pm-view-options button,
+.sana-shell .tab-switch-simple button,
+.sana-shell .company-switch,
+.sana-shell .sana-theme-toggle {
+  transition: background-color var(--motion-fast) ease,
+              border-color var(--motion-fast) ease,
+              color var(--motion-fast) ease,
+              box-shadow var(--motion-fast) ease;
+}
+
+/* Cards gain elevation, rather than scaling the page around them. */
+.sana-shell .sana-company-bento,
+.sana-shell .sana-suggestion,
+.sana-shell .sana-postit,
+.sana-shell .pm-board-card,
+.sana-shell .pm-directory-client,
+.sana-shell .sana-activity-row,
+.sana-shell .stack-item {
+  will-change: auto;
+  transition: transform var(--motion-standard) var(--motion-ease),
+              box-shadow var(--motion-standard) ease,
+              border-color var(--motion-fast) ease,
+              background-color var(--motion-fast) ease;
+}
+@media (hover:hover) and (pointer:fine) {
+  .sana-shell .sana-company-bento:hover {
+    transform:translateY(-2px);
+    border-color:#dcd9e3;
+    box-shadow:0 12px 32px #22212a0c;
+  }
+  .sana-shell .pm-board-card:hover,
+  .sana-shell .pm-directory-client:hover,
+  .sana-shell .stack-item:hover {
+    transform:translateY(-2px);
+    box-shadow:0 9px 24px #1f1d250d;
+  }
+  .sana-shell .sana-suggestion:hover,
+  .sana-shell .sana-postit:hover { transform:translateY(-3px); }
+}
+.sana-shell .sana-company-bento button,
+.sana-shell .sana-postit button,
+.sana-shell .pm-board-card,
+.sana-shell .sana-bento-up,
+.sana-shell .pm-brand-open,
+.sana-shell .pm-outline-action,
+.sana-shell .pm-add-client,
+.sana-shell .pm-client-website,
+.sana-shell .pm-page-breadcrumb button,
+.sana-shell .pm-back,
+.sana-shell .bs-add,
+.sana-shell .bs-export,
+.sana-shell .bs-save,
+.sana-shell .primary-btn,
+.sana-shell .secondary-btn {
+  transition: transform var(--motion-fast) var(--motion-ease),
+              box-shadow var(--motion-fast) ease,
+              color var(--motion-fast) ease,
+              border-color var(--motion-fast) ease,
+              background-color var(--motion-fast) ease,
+              opacity var(--motion-fast) ease;
+}
+@media (hover:hover) and (pointer:fine) {
+  .sana-shell .sana-bento-identity:hover .sana-bento-up {
+    transform:translate(3px,-3px);
+  }
+}
+.sana-shell .primary-btn:active,
+.sana-shell .secondary-btn:active,
+.sana-shell .pm-new-project:active,
+.sana-shell .sana-postit-continue:active,
+.sana-shell .bs-save:active { transform:scale(.985); }
+
+/* Entering collections: stagger max nine tiles, not distracting endless ripples. */
+.sana-shell .sana-company-bento,
+.sana-shell .sana-postit,
+.sana-shell .pm-directory-client {
+  animation: abo-tile-enter var(--motion-detail) var(--motion-ease) both;
+}
+.sana-shell .sana-company-bento:nth-child(2),
+.sana-shell .sana-postit:nth-child(2),
+.sana-shell .pm-directory-client:nth-child(2) { animation-delay:25ms; }
+.sana-shell .sana-company-bento:nth-child(3),
+.sana-shell .sana-postit:nth-child(3),
+.sana-shell .pm-directory-client:nth-child(3) { animation-delay:50ms; }
+.sana-shell .sana-company-bento:nth-child(4),
+.sana-shell .sana-postit:nth-child(4) { animation-delay:75ms; }
+.sana-shell .sana-postit:nth-child(5) { animation-delay:100ms; }
+.sana-shell .sana-postit:nth-child(6) { animation-delay:125ms; }
+.sana-shell .sana-postit:nth-child(7) { animation-delay:150ms; }
+.sana-shell .sana-postit:nth-child(8) { animation-delay:175ms; }
+.sana-shell .sana-postit:nth-child(9) { animation-delay:200ms; }
+@keyframes abo-tile-enter {
+  from { opacity:0; transform:translateY(9px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* Post-it expansion: allow the note content to collapse instead of disappearing. */
+.sana-shell .sana-postit-expand-region {
+  display:grid;
+  grid-template-rows:0fr;
+  opacity:0;
+  visibility:hidden;
+  min-height:0;
+  transition:grid-template-rows var(--motion-detail) var(--motion-ease),
+             opacity 160ms ease,
+             visibility var(--motion-detail);
+}
+.sana-shell .sana-postit-expand-region.is-open {
+  grid-template-rows:1fr;
+  opacity:1;
+  visibility:visible;
+}
+.sana-shell .sana-postit-expand-region > .sana-postit-details {
+  min-height:0;
+  overflow:hidden;
+  margin-top:0;
+  padding-top:0;
+}
+.sana-shell .sana-postit-expand-region.is-open > .sana-postit-details {
+  padding-top:12px;
+}
+
+/* Modal and detail opening. Dialogs appear above an easing backdrop, not a hard cut. */
+.sana-shell .overlay-panel,
+.sana-shell .pm-dialog-overlay,
+.sana-shell .bs-backdrop {
+  animation:abo-backdrop-in 185ms ease-out both;
+}
+.sana-shell .search-panel,
+.sana-shell .modal-card-simple,
+.sana-shell .pm-dialog {
+  transform-origin:50% 30%;
+  animation:abo-dialog-in 255ms var(--motion-ease) both;
+}
+.sana-shell .bs-dialog {
+  transform-origin:center;
+  animation:abo-sheet-in 280ms var(--motion-ease) both;
+}
+@keyframes abo-backdrop-in {
+  from {opacity:0;}
+  to {opacity:1;}
+}
+@keyframes abo-dialog-in {
+  from {opacity:0; transform:translateY(12px) scale(.982);}
+  to {opacity:1; transform:translateY(0) scale(1);}
+}
+@keyframes abo-sheet-in {
+  from {opacity:.45; transform:translateY(13px) scale(.989);}
+  to {opacity:1; transform:translateY(0) scale(1);}
+}
+
+/* Project details, lists and subtabs enter as a composed unit. */
+.sana-shell .pm-project-page,
+.sana-shell .pm-kanban,
+.sana-shell .pm-list,
+.sana-shell .pm-clients,
+.sana-shell .pm-project-resume-panel,
+.sana-shell .docs-layout-simple,
+.sana-shell .company-overview-strip {
+  animation:abo-content-enter 225ms var(--motion-out) both;
+}
+@keyframes abo-content-enter {
+  from {opacity:.6; transform:translateY(6px);}
+  to {opacity:1; transform:translateY(0);}
+}
+
+/* Gentle feedback on fields, without changing border widths or causing layout shifts. */
+.sana-shell input:not([type=checkbox]):not([type=radio]):focus-visible,
+.sana-shell textarea:focus-visible,
+.sana-shell select:focus-visible {
+  transition:border-color var(--motion-fast) ease,
+             box-shadow var(--motion-fast) ease,
+             background-color var(--motion-fast) ease;
+}
+.sana-shell button:focus-visible,
+.sana-shell a:focus-visible {
+  outline:2px solid #8675b7;
+  outline-offset:3px;
+}
+
+/* In motion-free mode navigation and disclosure remain fully functional. */
+@media (prefers-reduced-motion:reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration:0.01ms!important;
+  }
+  .sana-shell, .sana-shell *, .sana-shell *::before, .sana-shell *::after {
+    animation-duration:0.01ms!important;
+    animation-delay:0ms!important;
+    transition-duration:0.01ms!important;
+    scroll-behavior:auto!important;
+  }
+}

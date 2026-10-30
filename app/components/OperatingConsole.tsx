@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { smoothChange } from "@/lib/motion";
 import remarkGfm from "remark-gfm";
 import {
   Activity,
@@ -168,13 +169,11 @@ export function OperatingConsole() {
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setSearchOpen(true);
+        smoothChange(() => setSearchOpen(true));
         setTimeout(() => searchRef.current?.focus(), 0);
       }
       if (event.key === "Escape") {
-        setSearchOpen(false);
-        setCompanyOpen(false);
-        setModal(null);
+        smoothChange(() => { setSearchOpen(false); setCompanyOpen(false); setModal(null); });
       }
     };
     window.addEventListener("keydown", onKey);
@@ -247,19 +246,23 @@ export function OperatingConsole() {
   }, [effectiveDocId, company?.id, store.localDocs]);
 
   function navigate(next: View) {
-    if (next !== "projects") setFocusedProjectId(null);
-    setView(next);
-    setSearchOpen(false);
-    setMobileOpen(false);
+    smoothChange(() => {
+      if (next !== "projects") setFocusedProjectId(null);
+      setView(next);
+      setSearchOpen(false);
+      setMobileOpen(false);
+    });
   }
 
   function openCompany(id: string, next: View = "company") {
-    if (next !== "projects") setFocusedProjectId(null);
-    setCompanyId(id);
-    setView(next);
-    setCompanyOpen(false);
-    setSearchOpen(false);
-    setMobileOpen(false);
+    smoothChange(() => {
+      if (next !== "projects") setFocusedProjectId(null);
+      setCompanyId(id);
+      setView(next);
+      setCompanyOpen(false);
+      setSearchOpen(false);
+      setMobileOpen(false);
+    });
   }
 
   function toggleResumeProject(id: string) {
@@ -299,7 +302,7 @@ export function OperatingConsole() {
   }
 
   function openModal(kind: "company" | "project" | "mission") {
-    setModal(kind);
+    smoothChange(() => setModal(kind));
     setName("");
     setDescription("");
     setProjectId("");
@@ -352,7 +355,7 @@ export function OperatingConsole() {
       setView("missions");
     }
 
-    setModal(null);
+    smoothChange(() => setModal(null));
   }
 
   function updateProjectStage(id: string, stage: Project["stage"]) {
@@ -486,7 +489,7 @@ export function OperatingConsole() {
           <button className="icon-btn mobile-only" onClick={() => setMobileOpen(true)} aria-label="Abrir menú">
             <Menu size={18} />
           </button>
-          <button className="search-btn" onClick={() => setSearchOpen(true)}>
+          <button className="search-btn" onClick={() => smoothChange(() => setSearchOpen(true))}>
             <Search size={16} />
             <span>Buscar en tu espacio de trabajo</span>
             <kbd>⌘K</kbd>
@@ -563,7 +566,7 @@ export function OperatingConsole() {
                           <span className="sana-postit-stage">{STAGE_LABEL[project.stage]}{store.projectDetails[project.id]?.priority === "critical" ? " · Urgente" : store.projectDetails[project.id]?.priority === "high" ? " · Alta prioridad" : ""}{project.demo ? " · Demo" : ""}</span>
                           <button className="sana-postit-continue" type="button" onClick={() => continueProject(project)}>Continuar <ArrowUpRight size={15}/></button>
                         </div>
-                        {expanded && <div className="sana-postit-details">
+                        <div className={"sana-postit-expand-region" + (expanded ? " is-open" : "")} aria-hidden={!expanded} inert={!expanded}><div className="sana-postit-details">
                           <div className="sana-postit-divider"/>
                           <span className="sana-postit-detail-label">CONTEXTO</span>
                           <p>{project.description || "Sin descripción de proyecto."}</p>
@@ -578,7 +581,7 @@ export function OperatingConsole() {
                             <span>{savedNote ? "Nota guardada · " + new Date(savedNote.savedAt).toLocaleDateString("es-MX", { day:"numeric", month:"short" }) : "Solo en este navegador"}</span>
                             <button disabled={!noteChanged} onClick={() => saveResumeNote(project.id)}>Guardar nota</button>
                           </div>
-                        </div>}
+                        </div></div>
                       </article>;
                     })}
                   </div>}
@@ -858,7 +861,7 @@ export function OperatingConsole() {
       {mobileOpen && <button className="overlay" aria-label="Cerrar menú" onClick={() => setMobileOpen(false)} />}
 
       {searchOpen && (
-        <div className="overlay-panel" onClick={(event) => event.target === event.currentTarget && setSearchOpen(false)}>
+        <div className="overlay-panel" onClick={(event) => { if (event.target === event.currentTarget) smoothChange(() => setSearchOpen(false)); }}>
           <div className="search-panel">
             <div className="search-head"><Command size={16} /><input ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar vista, proyecto o misión" /></div>
             <div className="search-results">
@@ -880,7 +883,7 @@ export function OperatingConsole() {
       )}
 
       {modal && (
-        <div className="overlay-panel" onClick={(event) => event.target === event.currentTarget && setModal(null)}>
+        <div className="overlay-panel" onClick={(event) => { if (event.target === event.currentTarget) smoothChange(() => setModal(null)); }}>
           <form className="modal-card-simple" onSubmit={saveModal}>
             <div className="modal-head-simple">
               <div>
@@ -891,7 +894,7 @@ export function OperatingConsole() {
                   {modal === "company" ? "Crea un workspace nuevo." : modal === "project" ? "Agrega un proyecto a la empresa actual." : "Define un resultado esperado."}
                 </p>
               </div>
-              <button type="button" className="icon-btn" onClick={() => setModal(null)}><X size={16} /></button>
+              <button type="button" className="icon-btn" onClick={() => smoothChange(() => setModal(null))}><X size={16} /></button>
             </div>
             <label>
               Nombre
@@ -919,7 +922,7 @@ export function OperatingConsole() {
               </>
             )}
             <div className="modal-actions-simple">
-              <button type="button" className="secondary-btn" onClick={() => setModal(null)}>Cancelar</button>
+              <button type="button" className="secondary-btn" onClick={() => smoothChange(() => setModal(null))}>Cancelar</button>
               <button type="submit" className="primary-btn">Guardar</button>
             </div>
           </form>
