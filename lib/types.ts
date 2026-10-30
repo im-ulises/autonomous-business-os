@@ -141,6 +141,11 @@ export type SoftwarePhase = {
   status: SoftwarePhaseStatus;
   milestones: SoftwareMilestone[];
   notes: string;
+  /** Source document fields, not a statement of actual delivery progress. */
+  window?: string;
+  demo?: string;
+  sourcePage?: number;
+  acceptanceCriteria?: string[];
 };
 
 export type SoftwareProject = {
@@ -161,4 +166,7 @@ export type SoftwareProject = {
   notes: string;
   createdAt: string;
   updatedAt: string;
+  sourceName?: string;
+  sourceVersion?: string;
+  commercialWindow?: string;
 };
