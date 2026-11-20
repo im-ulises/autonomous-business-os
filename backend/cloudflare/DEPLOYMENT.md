@@ -25,7 +25,7 @@ connection from the Container.
    do not use an inactive unrelated project belonging to another product.
    Confirm backups and test restore. For IPv4 connectivity consider the
    provider's session pooler URL rather than an IPv6-only direct host.
-2. Apply backend/migrations/001_initial.sql as the database owner (once).
+2. Apply backend/migrations/001_initial.sql followed by 002_business_extensions.sql as the database owner (once).
 3. Configure a real OIDC issuer with HTTPS JWKS supporting RS256 or ES256.
    Set the exact JWT_ISSUER, JWT_AUDIENCE, JWT_JWKS_URL.
 4. Bootstrap a workspace with a verified JWT subject:
