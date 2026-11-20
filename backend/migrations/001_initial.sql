@@ -96,5 +96,19 @@ ALTER TABLE evo_missions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE evo_audit_events ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON evo_workspaces, evo_memberships, evo_companies, evo_clients, evo_projects,
-  evo_tasks, evo_missions, evo_audit_events FROM PUBLIC, anon, authenticated;
+  evo_tasks, evo_missions, evo_audit_events FROM PUBLIC;
+
+-- On hosted Supabase, anon/authenticated are predefined. Plain PostgreSQL may
+-- not have those roles: revoke from each only when it actually exists.
+DO $revoke$
+DECLARE db_role text;
+BEGIN
+  FOR db_role IN SELECT rolname FROM pg_roles WHERE rolname IN ('anon', 'authenticated') LOOP
+    EXECUTE format(
+      'REVOKE ALL ON TABLE evo_workspaces, evo_memberships, evo_companies, evo_clients, evo_projects, evo_tasks, evo_missions, evo_audit_events FROM %I',
+      db_role
+    );
+  END LOOP;
+END
+$revoke$;
 COMMIT;
