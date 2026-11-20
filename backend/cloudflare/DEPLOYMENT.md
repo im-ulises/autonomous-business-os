@@ -1,7 +1,9 @@
 # Deploy Autonomous Business OS API on Cloudflare
 
 **Status: configured in GitHub, not deployed.** The current Next.js demo is
-intentionally unchanged. The first stage must use a NEW PostgreSQL database.
+intentionally unchanged. A NEW dedicated Supabase project is provisioned:
+`pbjsynsaavhokloonnem` (US West, PostgreSQL 17), with migrations 001, 002,
+and 003 applied. No secrets or credentials are committed.
 Cloudflare Containers requires the Workers Paid plan.
 
 ## Architecture
@@ -21,11 +23,11 @@ connection from the Container.
 
 ## Dependencies and identity
 
-1. Provision a separate managed PostgreSQL instance. Supabase is an option, but
-   do not use an inactive unrelated project belonging to another product.
-   Confirm backups and test restore. For IPv4 connectivity consider the
-   provider's session pooler URL rather than an IPv6-only direct host.
-2. Apply backend/migrations/001_initial.sql followed by 002_business_extensions.sql as the database owner (once).
+1. Dedicated Supabase project created: `pbjsynsaavhokloonnem`. Confirm backups,
+   restore process, and database connectivity before use with client data.
+   For IPv4 connectivity, use Supabase session-pooler when appropriate.
+2. Migrated database with 001_initial, 002_business_extensions, 003_fk_indexes.
+   The migration files remain the canonical source for other environments.
 3. Configure a real OIDC issuer with HTTPS JWKS supporting RS256 or ES256.
    Set the exact JWT_ISSUER, JWT_AUDIENCE, JWT_JWKS_URL.
 4. Bootstrap a workspace with a verified JWT subject:
