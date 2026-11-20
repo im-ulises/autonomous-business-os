@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "autonomous-os-api",
+  "main": "cloudflare/index.js",
+  "compatibility_date": "2026-11-20",
+  "observability": { "enabled": true },
+  "containers": [{
+    "class_name": "AutonomousApiContainer",
+    "scheduling_policy": "durable_object",
+    "images": { "base": { "dockerfile": "./Dockerfile" } }
+  }],
+  "durable_objects": { "bindings": [
+    { "name": "API_CONTAINER", "class_name": "AutonomousApiContainer" }
+  ]},
+  "exports": { "AutonomousApiContainer": {
+    "type": "durable-object", "storage": "sqlite"
+  }}
+}
