@@ -213,8 +213,10 @@ def create_proposal(workspace_id: UUID, data: ProposalIn, db: Session = Depends(
 
 @router.patch("/proposals/{entity_id}")
 def update_proposal(workspace_id: UUID, entity_id: UUID, data: ProposalPatch, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
-    authorize(db, workspace_id, actor, owner=data.status == "approved", write=True)
+    authorize(db, workspace_id, actor, write=True)
     row = owned(db, workspace_id, Proposal, entity_id)
+    if data.status == "approved" or row.status == "approved":
+        authorize(db, workspace_id, actor, owner=True)
     if row.status == "approved" and data.status != "draft":
         raise HTTPException(status_code=409, detail="Approved proposals require explicit new revision workflow")
     bump(row, data.revision)
