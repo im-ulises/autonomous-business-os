@@ -1,0 +1,227 @@
+"""Autonomous Business OS HTTP API. No agent can self-declare completed work."""
+import os
+from uuid import UUID
+
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import select, text
+from sqlalchemy.orm import Session
+
+from app.db import get_db
+from app.models import AuditEvent, Client, Company, Membership, Mission, Project, Task, Workspace
+from app.schemas import (
+    AuditOut, ClientIn, ClientOut, CompanyIn, CompanyOut, MissionIn, MissionOut,
+    ProjectIn, ProjectOut, ProjectPatch, TaskIn, TaskOut, TaskPatch, WorkspaceOut,
+)
+from app.security import Principal, authorize, get_principal
+
+app = FastAPI(title="Autonomous Business OS API", version="0.1.0")
+
+origins = [item.strip() for item in os.getenv("CORS_ORIGINS", "").split(",") if item.strip()]
+if origins:
+    app.add_middleware(
+        CORSMiddleware, allow_origins=origins, allow_credentials=False,
+        allow_methods=["GET", "POST", "PATCH"], allow_headers=["Authorization", "Content-Type"],
+    )
+
+
+@app.get("/healthz")
+def healthz():
+    return {"status": "up", "service": "autonomous-os-api"}
+
+
+@app.get("/readyz")
+def readyz(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1 FROM evo_workspaces LIMIT 1"))
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Database is not ready") from exc
+    return {"status": "ready"}
+
+
+def audit(db: Session, workspace_id: UUID, principal: Principal, action: str, entity_type: str, entity_id: UUID):
+    db.add(AuditEvent(
+        workspace_id=workspace_id, actor_subject=principal.subject,
+        action=action, entity_type=entity_type, entity_id=entity_id, details={},
+    ))
+
+
+def company_for(db: Session, workspace_id: UUID, company_id: UUID) -> Company:
+    company = db.scalar(select(Company).where(Company.id == company_id, Company.workspace_id == workspace_id))
+    if company is None:
+        raise HTTPException(status_code=404, detail="Company not found in workspace")
+    return company
+
+
+def project_for(db: Session, workspace_id: UUID, project_id: UUID) -> Project:
+    project = db.scalar(
+        select(Project).join(Company, Project.company_id == Company.id)
+        .where(Project.id == project_id, Company.workspace_id == workspace_id)
+    )
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found in workspace")
+    return project
+
+
+def task_for(db: Session, workspace_id: UUID, task_id: UUID) -> Task:
+    task = db.scalar(
+        select(Task).join(Project, Task.project_id == Project.id)
+        .join(Company, Project.company_id == Company.id)
+        .where(Task.id == task_id, Company.workspace_id == workspace_id)
+    )
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found in workspace")
+    return task
+
+
+def client_for_company(db: Session, company_id: UUID, client_id: UUID) -> Client:
+    client = db.scalar(select(Client).where(Client.id == client_id, Client.company_id == company_id))
+    if client is None:
+        raise HTTPException(status_code=422, detail="Client must belong to the project's company")
+    return client
+
+
+@app.get("/v1/workspaces", response_model=list[WorkspaceOut])
+def workspaces(db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    rows = db.execute(
+        select(Workspace, Membership.role).join(Membership, Workspace.id == Membership.workspace_id)
+        .where(Membership.subject == actor.subject).order_by(Workspace.name)
+    ).all()
+    return [WorkspaceOut(id=ws.id, name=ws.name, role=role) for ws, role in rows]
+
+
+@app.get("/v1/workspaces/{workspace_id}/companies", response_model=list[CompanyOut])
+def companies(workspace_id: UUID, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor)
+    return db.scalars(select(Company).where(Company.workspace_id == workspace_id).order_by(Company.name)).all()
+
+
+@app.post("/v1/workspaces/{workspace_id}/companies", response_model=CompanyOut, status_code=201)
+def create_company(workspace_id: UUID, payload: CompanyIn, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor, write=True)
+    company = Company(workspace_id=workspace_id, **payload.model_dump())
+    db.add(company)
+    db.flush()
+    audit(db, workspace_id, actor, "create", "company", company.id)
+    db.commit()
+    return company
+
+
+@app.get("/v1/workspaces/{workspace_id}/clients", response_model=list[ClientOut])
+def clients(workspace_id: UUID, company_id: UUID, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor)
+    company_for(db, workspace_id, company_id)
+    return db.scalars(select(Client).where(Client.company_id == company_id).order_by(Client.name)).all()
+
+
+@app.post("/v1/workspaces/{workspace_id}/clients", response_model=ClientOut, status_code=201)
+def create_client(workspace_id: UUID, payload: ClientIn, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor, write=True)
+    company_for(db, workspace_id, payload.company_id)
+    client = Client(**payload.model_dump())
+    db.add(client)
+    db.flush()
+    audit(db, workspace_id, actor, "create", "client", client.id)
+    db.commit()
+    return client
+
+
+@app.get("/v1/workspaces/{workspace_id}/projects", response_model=list[ProjectOut])
+def projects(workspace_id: UUID, company_id: UUID, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor)
+    company_for(db, workspace_id, company_id)
+    return db.scalars(select(Project).where(Project.company_id == company_id).order_by(Project.created_at.desc())).all()
+
+
+@app.post("/v1/workspaces/{workspace_id}/projects", response_model=ProjectOut, status_code=201)
+def create_project(workspace_id: UUID, payload: ProjectIn, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor, write=True)
+    company_for(db, workspace_id, payload.company_id)
+    if payload.client_id:
+        client_for_company(db, payload.company_id, payload.client_id)
+    project = Project(**payload.model_dump())
+    db.add(project)
+    db.flush()
+    audit(db, workspace_id, actor, "create", "project", project.id)
+    db.commit()
+    return project
+
+
+@app.patch("/v1/workspaces/{workspace_id}/projects/{project_id}", response_model=ProjectOut)
+def edit_project(workspace_id: UUID, project_id: UUID, payload: ProjectPatch, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor, write=True)
+    project = project_for(db, workspace_id, project_id)
+    changes = payload.model_dump(exclude_unset=True)
+    if changes.get("client_id"):
+        client_for_company(db, project.company_id, changes["client_id"])
+    for key, value in changes.items():
+        if key not in ("due_date", "client_id") and value is None:
+            raise HTTPException(status_code=422, detail=f"{key} cannot be null")
+        setattr(project, key, value)
+    audit(db, workspace_id, actor, "update", "project", project.id)
+    db.commit()
+    return project
+
+
+@app.get("/v1/workspaces/{workspace_id}/tasks", response_model=list[TaskOut])
+def tasks(workspace_id: UUID, project_id: UUID, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor)
+    project_for(db, workspace_id, project_id)
+    return db.scalars(select(Task).where(Task.project_id == project_id).order_by(Task.created_at)).all()
+
+
+@app.post("/v1/workspaces/{workspace_id}/tasks", response_model=TaskOut, status_code=201)
+def create_task(workspace_id: UUID, payload: TaskIn, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor, write=True)
+    project_for(db, workspace_id, payload.project_id)
+    task = Task(**payload.model_dump())
+    db.add(task)
+    db.flush()
+    audit(db, workspace_id, actor, "create", "task", task.id)
+    db.commit()
+    return task
+
+
+@app.patch("/v1/workspaces/{workspace_id}/tasks/{task_id}", response_model=TaskOut)
+def edit_task(workspace_id: UUID, task_id: UUID, payload: TaskPatch, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor, write=True)
+    task = task_for(db, workspace_id, task_id)
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        if key in ("title", "status") and value is None:
+            raise HTTPException(status_code=422, detail=f"{key} cannot be null")
+        setattr(task, key, value)
+    audit(db, workspace_id, actor, "update", "task", task.id)
+    db.commit()
+    return task
+
+
+@app.get("/v1/workspaces/{workspace_id}/missions", response_model=list[MissionOut])
+def missions(workspace_id: UUID, company_id: UUID, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor)
+    company_for(db, workspace_id, company_id)
+    return db.scalars(select(Mission).where(Mission.company_id == company_id).order_by(Mission.created_at.desc())).all()
+
+
+@app.post("/v1/workspaces/{workspace_id}/missions", response_model=MissionOut, status_code=201)
+def prepare_mission(workspace_id: UUID, payload: MissionIn, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor, write=True)
+    company_for(db, workspace_id, payload.company_id)
+    if payload.project_id:
+        project = project_for(db, workspace_id, payload.project_id)
+        if project.company_id != payload.company_id:
+            raise HTTPException(status_code=422, detail="Project and mission must belong to same company")
+    mission = Mission(**payload.model_dump(), status="draft")
+    db.add(mission)
+    db.flush()
+    audit(db, workspace_id, actor, "prepare", "mission", mission.id)
+    db.commit()
+    return mission
+
+
+@app.get("/v1/workspaces/{workspace_id}/audit-events", response_model=list[AuditOut])
+def audit_events(workspace_id: UUID, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    authorize(db, workspace_id, actor, owner=True)
+    return db.scalars(
+        select(AuditEvent).where(AuditEvent.workspace_id == workspace_id)
+        .order_by(AuditEvent.occurred_at.desc()).limit(100)
+    ).all()
