@@ -225,3 +225,8 @@ def audit_events(workspace_id: UUID, db: Session = Depends(get_db), actor: Princ
         select(AuditEvent).where(AuditEvent.workspace_id == workspace_id)
         .order_by(AuditEvent.occurred_at.desc()).limit(100)
     ).all()
+
+
+# Business modules are kept outside the core CRUD service for independent evolution.
+from app.business_api import router as business_router
+app.include_router(business_router)
