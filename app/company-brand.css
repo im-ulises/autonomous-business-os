@@ -33,7 +33,7 @@
 .sana-shell .cb-swatch>div:last-child { display:flex;flex-direction:column;min-width:0;gap:3px; }
 .sana-shell .cb-swatch strong { font-size:11.5px;font-weight:650;overflow:hidden;white-space:nowrap;text-overflow:ellipsis; }
 .sana-shell .cb-swatch span,.sana-shell .cb-swatch small { font-size:9.5px;color:#a09ca4; }
-.sana-shell .cb-swatch code { font-size:10.5px;color:#5c5860;font-family:ui-monospace,SFMono-Regular,Consolas,monospace; }
+.sana-shell .cb-swatch code { font-size:10.5px;color:#5c5860;font-family:var(--font-mono); }
 .sana-shell .cb-logo-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px; }
 .sana-shell .cb-logo-card { border:1px solid #eceaec;background:#fafaf9;border-radius:10px;overflow:hidden;min-width:0;display:flex;flex-direction:column;gap:5px;padding-bottom:10px; }
 .sana-shell .cb-logo-preview { height:105px;background:#efeff0;display:grid;place-items:center;color:#a6a2a9; }
