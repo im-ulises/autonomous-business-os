@@ -1,60 +1,65 @@
-name: Deploy Autonomous OS Backend to Cloudflare
+name: Deploy Python Workers to staging (manual and gated)
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: "Deploy isolated staging or production Worker"
-        required: true
-        default: staging
-        type: choice
-        options: [staging, production]
 permissions:
   contents: read
-
 concurrency:
-  group: autonomous-backend-${{ inputs.environment }}
+  group: autonomous-os-python-api-staging
   cancel-in-progress: false
-
 jobs:
-  deploy:
+  staging:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment: staging
     defaults:
       run:
         working-directory: backend
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      DATABASE_URL: ${{ secrets.AUTONOMOUS_DATABASE_URL }}
-      DB_EXPECTED_LOGIN: ${{ vars.AUTONOMOUS_DB_EXPECTED_LOGIN }}
       JWT_ISSUER: ${{ secrets.AUTONOMOUS_JWT_ISSUER }}
       JWT_AUDIENCE: ${{ secrets.AUTONOMOUS_JWT_AUDIENCE }}
       JWT_JWKS_URL: ${{ secrets.AUTONOMOUS_JWT_JWKS_URL }}
       CORS_ORIGINS: ${{ vars.AUTONOMOUS_CORS_ORIGINS }}
-      CONFIG: wrangler.${{ inputs.environment }}.jsonc
+      DB_EXPECTED_LOGIN: ${{ vars.AUTONOMOUS_DB_EXPECTED_LOGIN }}
+      HYPERDRIVE_ID: ${{ vars.AUTONOMOUS_HYPERDRIVE_ID }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Require secrets before deployment
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+      - name: Require all real staging provisioning before release
         shell: bash
         run: |
           set -euo pipefail
-          for key in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID DATABASE_URL DB_EXPECTED_LOGIN JWT_ISSUER JWT_AUDIENCE JWT_JWKS_URL; do
+          for key in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID JWT_ISSUER JWT_AUDIENCE JWT_JWKS_URL DB_EXPECTED_LOGIN HYPERDRIVE_ID CORS_ORIGINS; do
             if [[ -z "${!key:-}" ]]; then
-              echo "::error::Missing required secret $key"
+              echo "::error::Missing required staging configuration $key"
               exit 1
             fi
           done
-      - name: Deploy Cloudflare Worker and FastAPI Container
-        run: npx --yes wrangler@4.164.0 deploy --config "$CONFIG"
-      - name: Set Worker secrets
+          [[ "$DB_EXPECTED_LOGIN" != "postgres" && "$DB_EXPECTED_LOGIN" != "service_role" ]] || exit 1
+      - name: Prepare staging Hyperdrive binding
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          config=json.loads(Path("wrangler.python.staging.jsonc").read_text())
+          config["hyperdrive"]=[{"binding":"HYPERDRIVE","id":os.environ["HYPERDRIVE_ID"]}]
+          Path("wrangler.jsonc").write_text(json.dumps(config,indent=2)+"\n")
+          PY
+      - name: Deploy Python Worker (no Containers)
+        run: uv run --python 3.13 pywrangler deploy
+      - name: Install API secrets
         shell: bash
         run: |
           set -euo pipefail
-          for key in DATABASE_URL DB_EXPECTED_LOGIN JWT_ISSUER JWT_AUDIENCE JWT_JWKS_URL CORS_ORIGINS; do
-            printf '%s' "${!key:-}" | npx --yes wrangler@4.164.0 secret put "$key" --config "$CONFIG"
+          for key in JWT_ISSUER JWT_AUDIENCE JWT_JWKS_URL CORS_ORIGINS DB_EXPECTED_LOGIN; do
+            printf '%s' "${!key}" | npx --yes wrangler@4.164.0 secret put "$key"
           done
-      - name: List deployment status
-        run: npx --yes wrangler@4.164.0 deployments list --config "$CONFIG"
+      - name: List staging deployment
+        run: npx --yes wrangler@4.164.0 deployments list
