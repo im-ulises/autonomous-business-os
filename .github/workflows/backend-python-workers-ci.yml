@@ -51,6 +51,16 @@ jobs:
           for attempt in $(seq 1 75); do
             if curl --silent --fail http://127.0.0.1:8787/healthz | grep -q '"status":"up"'; then
               echo "Cloudflare Pyodide FastAPI cold-start health check passed"
+              HTTP_CODE=$(curl --silent --output /tmp/autonomous-edge-body --write-out '%{http_code}' http://127.0.0.1:8787/v1/workspaces)
+              [[ "$HTTP_CODE" == "503" ]] || {
+                echo "::error::Unprovisioned API must fail closed with HTTP 503 (got $HTTP_CODE)"
+                exit 1
+              }
+              HTTP_CODE=$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8787/openapi.json)
+              [[ "$HTTP_CODE" == "404" ]] || {
+                echo "::error::OpenAPI schema must remain private in non-development"
+                exit 1
+              }
               exit 0
             fi
             sleep 2
