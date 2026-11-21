@@ -1,11 +1,12 @@
 """Real RSA JWT verification tests (not overriding auth dependencies)."""
+import asyncio
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials
 
 import app.security as security
@@ -41,9 +42,17 @@ def jwt_identity(monkeypatch):
     return sign
 
 
+def request_with_env(env=None):
+    scope = {"type":"http", "method":"GET", "path":"/",
+             "headers":[], "query_string":b"", "scheme":"https"}
+    if env is not None:
+        scope["env"] = env
+    return Request(scope)
+
+
 def principal_for(token):
-    return security.get_principal(HTTPAuthorizationCredentials(
-        scheme="Bearer",credentials=token,
+    return asyncio.run(security.get_principal(
+        request_with_env(), HTTPAuthorizationCredentials(scheme="Bearer", credentials=token),
     ))
 
 
@@ -54,7 +63,7 @@ def test_valid_rsa_user_token_is_accepted(jwt_identity):
 
 def test_missing_token_fails_with_401(jwt_identity):
     with pytest.raises(HTTPException) as exc:
-        security.get_principal(None)
+        asyncio.run(security.get_principal(request_with_env(), None))
     assert exc.value.status_code == 401
 
 

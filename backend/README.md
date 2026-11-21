@@ -1,57 +1,51 @@
-# Autonomous Business OS API — FastAPI
+# Autonomous Business OS — Independent FastAPI backend
 
-An independent FastAPI service backing the existing Next.js UI.
-Business records belong to Autonomous OS. Crobi Chief owns agent approvals,
-execution authority and evidence; this backend never runs agent missions.
+This is a separate, tenant-scoped FastAPI API for Next.js, with Supabase
+PostgreSQL 17 as the authoritative database. Crobi/Forge are independent
+agent executors, and this API does not autonomously dispatch work.
 
-## Local development
+## Cloudflare hosting — Python Workers, no Containers
 
-Requires Python 3.12+ and PostgreSQL. From backend/:
+The current deployment target is **Cloudflare Python Workers**:
+- worker.py is the FastAPI ASGI entrypoint using Cloudflare's workers SDK.
+- backend/wrangler.jsonc is a staging-default Python Worker configuration.
+- backend/wrangler.python.production.jsonc is reserved for production.
+- Hyperdrive + pg8000 is the database transport for Python Workers.
+- No Dockerfile, Container, Uvicorn server process or VPS migration needed.
 
-~~~
+See [PYTHON_WORKERS.md](cloudflare/PYTHON_WORKERS.md) for deployment and
+security gating. The old Containers deployment strategy has been retired.
+
+## Local CPython development
+
+From backend/, with Python 3.12+, PostgreSQL 17 and actual local-only
+secrets:
+
+\`\`\`sh
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-# Supply environment variables from a trusted secret manager:
-# DATABASE_URL, JWT_ISSUER, JWT_AUDIENCE, JWT_JWKS_URL, CORS_ORIGINS
-psql "$POSTGRES_URL" -v ON_ERROR_STOP=1 -f migrations/001_initial.sql
-python -m app.bootstrap --workspace-name "EVO Studios" --owner-sub "VERIFIED_SUB"
+# Set DATABASE_URL, DB_EXPECTED_LOGIN, JWT_ISSUER, JWT_AUDIENCE,
+# JWT_JWKS_URL, CORS_ORIGINS using an untracked .env file/secret manager.
 uvicorn app.main:app --reload
 pytest -q
-~~~
+\`\`\`
 
-Health: GET /healthz. Database readiness: GET /readyz.
-REST/OpenAPI: /docs and /openapi.json.
+\`/healthz\` checks process availability; \`/readyz\` checks the database.
+The OpenAPI docs are disabled unless APP_ENV=development.
 
-## Cloudflare
-Read [Cloudflare deployment instructions](cloudflare/DEPLOYMENT.md).
-Staging and production Workers are separate and require Cloudflare Workers Paid,
-an external PostgreSQL instance and real OIDC credentials. No deployment has
-been performed by merely committing these files.
+## Database & security state
 
-## Security and boundaries
-- JWT validation requires real OIDC issuer, JWKS, expiry and audience.
-- No anonymous create/update, no permissive development bypass.
-- Owner/editor/viewer membership is always checked against the workspace in DB.
-- References to company/client/project must remain in the same tenant.
-- PostgreSQL migration enables RLS and revokes Data API direct access.
-- API runs through a server-side DB owner/dedicated role, never a browser key.
-- Missions are draft-only. No agent may self-approve, dispatch or report a
-  completed job through this API.
-- Demo browser localStorage is not real project state; import requires review.
-- Audit records are not yet tamper-evident.
-- Multi-company ACLs, documents, deliverables, proposals, brand assets and
-  agent events need later implementation.
+Supabase project pbjsynsaavhokloonnem has migrations 001–009, 25 tables
+with FORCE RLS, and no imported business/customer data. The restricted
+login role \`autonomous_os_login\` is intentionally NOLOGIN: no real API
+connection is possible until a secure credential and Hyperdrive binding
+are provisioned. Never put passwords or service_role tokens in browser JS.
 
+Workspace/company memberships are server-side; all agent missions remain
+draft-only, and quote/acceptance approvals require separate owner review.
+Browser localStorage is not yet migrated. No production deployment is live.
 
-## Independent security review follow-up
-
-See PR #25 for the Grok-audit security remediations.
-Live Supabase has migrations 001-003 only. Additional migration 004
-introduces company ACLs; migration 005 enforces per-workspace RLS
-for a non-owner database role. Do not apply 005 until a trusted operator
-has provisioned an initial workspace and a dedicated non-owner LOGIN
-credential with GRANT to autonomous_os_api, and a disposable Postgres
-integration test is green. No production credentials belong in source.
-Production and staging remain blocked pending Cloudflare cold start and
-frontend/API contract reconciliation.
+Run backend CI (native Python + PostgreSQL) and Python Workers
+compatibility CI before enabling staging. A Python Workers package dry-run
+alone does not prove the API or PostgreSQL access works.

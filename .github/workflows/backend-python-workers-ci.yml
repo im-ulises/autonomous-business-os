@@ -1,0 +1,70 @@
+name: Python Workers compatibility
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-python-workers-ci.yml"
+  push:
+    branches:
+      - "feat/python-workers-fastapi-no-containers"
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-python-workers-ci.yml"
+permissions:
+  contents: read
+jobs:
+  pyodide-dry-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate pure Python Worker config
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for name in ("wrangler.python.staging.jsonc", "wrangler.python.production.jsonc"):
+              config = json.loads(Path(name).read_text())
+              assert config["main"] == "worker.py"
+              assert "python_workers" in config["compatibility_flags"]
+              assert "containers" not in config and "durable_objects" not in config
+              assert "hyperdrive" not in config  # Binding created only after safe DB login.
+          PY
+      - name: Verify Python Worker package compatibility in Pyodide
+        run: uv run --python 3.13 pywrangler deploy --dry-run
+      - name: Boot Python Worker in local workerd/Pyodide and verify health
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv run --python 3.13 pywrangler dev > /tmp/autonomous-python-worker-dev.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 75); do
+            if curl --silent --fail http://127.0.0.1:8787/healthz | grep -q '"status":"up"'; then
+              echo "Cloudflare Pyodide FastAPI cold-start health check passed"
+              HTTP_CODE=$(curl --silent --output /tmp/autonomous-edge-body --write-out '%{http_code}' http://127.0.0.1:8787/v1/workspaces)
+              [[ "$HTTP_CODE" == "503" ]] || {
+                echo "::error::Unprovisioned API must fail closed with HTTP 503 (got $HTTP_CODE)"
+                exit 1
+              }
+              HTTP_CODE=$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8787/openapi.json)
+              [[ "$HTTP_CODE" == "404" ]] || {
+                echo "::error::OpenAPI schema must remain private in non-development"
+                exit 1
+              }
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Python Worker did not start in workerd"
+          tail -n 120 /tmp/autonomous-python-worker-dev.log
+          exit 1

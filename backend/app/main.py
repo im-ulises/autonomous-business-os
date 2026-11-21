@@ -1,8 +1,9 @@
 """Autonomous Business OS HTTP API. No agent can self-declare completed work."""
 import os
+import asyncio
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
@@ -26,6 +27,50 @@ if origins:
         CORSMiddleware, allow_origins=origins, allow_credentials=False,
         allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"], allow_headers=["Authorization", "Content-Type"],
     )
+
+
+# Cloudflare exposes secrets/HYPERDRIVE in request.scope["env"].
+# Cloudflare documents serializing sync SQLAlchemy work within one isolate.
+_worker_db_lock = asyncio.Lock()
+
+
+@app.middleware("http")
+async def worker_runtime_middleware(request: Request, call_next):
+    env = request.scope.get("env")
+    if env is None:
+        return await call_next(request)  # Native CPython's CORSMiddleware still applies.
+
+    origin = request.headers.get("origin", "")
+    origins = [item.strip() for item in str(getattr(env, "CORS_ORIGINS", "") or "").split(",")
+               if item.strip()]
+    allowed = bool(origin and origin in origins)
+    path = request.url.path
+
+    if request.method == "OPTIONS" and request.headers.get("access-control-request-method"):
+        if not allowed:
+            return Response(status_code=403)
+        requested = request.headers["access-control-request-method"].upper()
+        if requested not in ("GET", "POST", "PATCH", "PUT", "DELETE"):
+            return Response(status_code=405)
+        return Response(status_code=204, headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type",
+            "Access-Control-Max-Age": "600",
+            "Vary": "Origin",
+        })
+
+    if path.startswith("/v1/") or path == "/readyz":
+        async with _worker_db_lock:
+            response = await call_next(request)
+    else:
+        response = await call_next(request)
+    if allowed:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Vary"] = "Origin"
+    if path.startswith("/v1/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.get("/healthz")
