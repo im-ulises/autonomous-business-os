@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS evo_software_phases (
     CHECK (status IN ('pending','active','review','blocked','done')),
   notes text NOT NULL DEFAULT '',
   phase_order integer NOT NULL DEFAULT 0,
-  window text NOT NULL DEFAULT '',
+  phase_window text NOT NULL DEFAULT '',
   demo text NOT NULL DEFAULT '',
   source_page integer,
   acceptance_criteria jsonb NOT NULL DEFAULT '[]'::jsonb

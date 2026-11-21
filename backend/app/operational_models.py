@@ -54,7 +54,7 @@ class SoftwarePhase(Base):
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
     notes: Mapped[str] = mapped_column(Text, default="", nullable=False)
     phase_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    window: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    window: Mapped[str] = mapped_column("phase_window", Text, default="", nullable=False)
     demo: Mapped[str] = mapped_column(Text, default="", nullable=False)
     source_page: Mapped[int | None] = mapped_column(Integer)
     acceptance_criteria: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
