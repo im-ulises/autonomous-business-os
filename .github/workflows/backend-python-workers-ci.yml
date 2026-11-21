@@ -41,3 +41,20 @@ jobs:
           PY
       - name: Verify Python Worker package compatibility in Pyodide
         run: uv run --python 3.13 pywrangler deploy --dry-run
+      - name: Boot Python Worker in local workerd/Pyodide and verify health
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv run --python 3.13 pywrangler dev > /tmp/autonomous-python-worker-dev.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 75); do
+            if curl --silent --fail http://127.0.0.1:8787/healthz | grep -q '"status":"up"'; then
+              echo "Cloudflare Pyodide FastAPI cold-start health check passed"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Python Worker did not start in workerd"
+          tail -n 120 /tmp/autonomous-python-worker-dev.log
+          exit 1
