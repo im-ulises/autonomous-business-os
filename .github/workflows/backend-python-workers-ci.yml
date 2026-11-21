@@ -1,0 +1,43 @@
+name: Python Workers compatibility
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-python-workers-ci.yml"
+  push:
+    branches:
+      - "feat/python-workers-fastapi-no-containers"
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-python-workers-ci.yml"
+permissions:
+  contents: read
+jobs:
+  pyodide-dry-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate pure Python Worker config
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for name in ("wrangler.python.staging.jsonc", "wrangler.python.production.jsonc"):
+              config = json.loads(Path(name).read_text())
+              assert config["main"] == "worker.py"
+              assert "python_workers" in config["compatibility_flags"]
+              assert "containers" not in config and "durable_objects" not in config
+              assert "hyperdrive" not in config  # Binding created only after safe DB login.
+          PY
+      - name: Verify Python Worker package compatibility in Pyodide
+        run: uv run --python 3.13 pywrangler deploy --dry-run --config wrangler.python.staging.jsonc
