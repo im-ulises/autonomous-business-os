@@ -10,7 +10,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select, update
+from sqlalchemy import select, update, inspect
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -30,7 +30,7 @@ router = APIRouter(prefix="/v1/workspaces/{workspace_id}", tags=["Operational re
 
 
 def rowdict(row):
-    return {column.name: getattr(row, column.name) for column in row.__table__.columns}
+    return {column.key: getattr(row, column.key) for column in inspect(type(row)).column_attrs}
 
 
 def audit(db: Session, workspace_id: UUID, actor: Principal, verb: str, kind: str, entity_id: UUID):

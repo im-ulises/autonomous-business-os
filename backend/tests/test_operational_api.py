@@ -95,9 +95,6 @@ def test_lessons_can_be_approved_only_by_owner_and_evidence():
         assert draft.status_code == 201, draft.text
         lid = draft.json()["id"]
         assert draft.json()["status"] == "draft"
-        with Session(engine) as db:
-            db.add(Membership(workspace_id=wid,subject="viewer",role="viewer"))
-            db.commit()
         switch_actor("viewer")
         blocked = client.post(f"/v1/workspaces/{wid}/department-lessons/{lid}/review",
             json={"status":"approved","evidence_url":"https://example.com/evidence"})
