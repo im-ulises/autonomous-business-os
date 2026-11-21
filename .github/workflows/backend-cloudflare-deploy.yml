@@ -43,6 +43,25 @@ jobs:
             fi
           done
           [[ "$DB_EXPECTED_LOGIN" != "postgres" && "$DB_EXPECTED_LOGIN" != "service_role" ]] || exit 1
+      - name: Require Hyperdrive query cache disabled for tenant RLS
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/hyperdrive/configs/${HYPERDRIVE_ID}" \
+            > /tmp/autonomous-hyperdrive.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          cfg = json.loads(Path("/tmp/autonomous-hyperdrive.json").read_text())
+          assert cfg.get("success") is True, "Hyperdrive config lookup failed"
+          assert cfg["result"]["caching"]["disabled"] is True, (
+              "Hyperdrive query cache MUST be disabled: RLS depends on "
+              "transaction-local subject and workspace settings"
+          )
+          print("Confirmed: Hyperdrive query cache disabled")
+          PY
       - name: Prepare staging Hyperdrive binding
         run: |
           python3 - <<'PY'
