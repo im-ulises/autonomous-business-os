@@ -9,7 +9,7 @@ from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
@@ -21,6 +21,10 @@ from app.operational_models import (
     SoftwareProduct, SoftwarePhase, SoftwareMilestone, SoftwareAcceptance,
 )
 from app.security import Principal, authorize, authorize_company, get_principal
+
+class StrictIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
 
 router = APIRouter(prefix="/v1/workspaces/{workspace_id}", tags=["Operational records"])
 
@@ -51,14 +55,14 @@ def verified_https(value: str):
     return value
 
 
-class MilestoneIn(BaseModel):
+class MilestoneIn(StrictIn):
     title: str = Field(min_length=1, max_length=200)
     deliverable: str = Field(default="", max_length=10000)
     due_date: date | None = None
     done: bool = False
 
 
-class PhaseIn(BaseModel):
+class PhaseIn(StrictIn):
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(default="", max_length=10000)
     status: Literal["pending","active","review","blocked","done"] = "pending"
@@ -70,7 +74,7 @@ class PhaseIn(BaseModel):
     acceptance_criteria: list[str] = Field(default_factory=list, max_length=100)
 
 
-class SoftwareIn(BaseModel):
+class SoftwareIn(StrictIn):
     company_id: UUID
     client_id: UUID | None = None
     name: str = Field(min_length=1, max_length=200)
@@ -90,7 +94,7 @@ class SoftwareIn(BaseModel):
     phases: list[PhaseIn] = Field(default_factory=list, max_length=100)
 
 
-class EvidenceIn(BaseModel):
+class EvidenceIn(StrictIn):
     evidence_url: str = Field(min_length=8, max_length=2048)
     summary: str = Field(min_length=1, max_length=20000)
 
@@ -99,7 +103,7 @@ class SoftwareReviewIn(EvidenceIn):
     level: Literal["implemented", "staging", "accepted"]
 
 
-class LessonIn(BaseModel):
+class LessonIn(StrictIn):
     category: Literal["worked","failed","insight","decision"]
     title: str = Field(min_length=1, max_length=200)
     situation: str = Field(default="", max_length=20000)
@@ -109,12 +113,12 @@ class LessonIn(BaseModel):
     observed_at: datetime | None = None
 
 
-class LessonReviewIn(BaseModel):
+class LessonReviewIn(StrictIn):
     status: Literal["approved", "rejected"]
     evidence_url: str = Field(default="", max_length=2048)
 
 
-class TemplateIn(BaseModel):
+class TemplateIn(StrictIn):
     company_id: UUID
     name: str = Field(min_length=1, max_length=160)
     layout: Literal["editorial","classic"] = "editorial"
@@ -137,7 +141,7 @@ class TemplateIn(BaseModel):
     default_deposit_percent: Decimal = Field(default=Decimal("0"),ge=0,le=100)
 
 
-class QuoteLineIn(BaseModel):
+class QuoteLineIn(StrictIn):
     description: str = Field(min_length=1, max_length=20000)
     details: str = Field(default="", max_length=20000)
     quantity: Decimal = Field(gt=0, max_digits=14, decimal_places=4)
@@ -145,7 +149,7 @@ class QuoteLineIn(BaseModel):
     unit_price: Decimal = Field(ge=0, max_digits=18, decimal_places=4)
 
 
-class QuoteIn(BaseModel):
+class QuoteIn(StrictIn):
     company_id: UUID
     client_id: UUID | None = None
     template_id: UUID | None = None
