@@ -90,3 +90,42 @@ has been reviewed and a maintenance plan exists.
 Cloudflare documentation:
 https://developers.cloudflare.com/containers/get-started/
 https://developers.cloudflare.com/containers/examples/env-vars-and-secrets/
+
+
+## Security gate from Grok audit (2026-11-20)
+
+**Do not deploy this branch yet.** The existing Supabase project
+pbjsynsaavhokloonnem has migrations 001, 002 and 003 applied.
+Migrations 004 (company ACL) and 005 (FORCE RLS / non-owner role)
+are **committed but NOT yet applied to that live project**.
+
+Before applying migration 005, bootstrap a real workspace and owner under
+a trusted operator connection; otherwise FORCE RLS may block ordinary
+table-owner bootstrap. Create a distinct, low-privilege LOGIN user with a
+strong password stored only in a private secret manager, then GRANT the
+NOLOGIN autonomous_os_api role to this user. Do not use the 'postgres'
+or 'service_role' credentials as DATABASE_URL for FastAPI.
+
+The actual operator's role setup must be audited on the chosen PostgreSQL
+host. Never place passwords in SQL files, GitHub issues or PR descriptions.
+FastAPI requires:
+- DATABASE_URL pointing to the dedicated non-owner login (TLS enabled)
+- DB_EXPECTED_LOGIN matching the login exactly
+- verified OIDC JWKS, issuer and audience
+- company memberships explicitly granted by the verified workspace owner.
+
+The 005 SQL deliberately revokes Data API access for service_role and
+sets FORCE ROW LEVEL SECURITY for business tables. Test this on a disposable
+database before applying it to a project with real customer data. Use a
+restricted API role and tenant context; never issue SQL from an LLM or
+expose any Postgres credentials in MCP tools.
+
+The edge DO uses 'standard-1' and explicit restart on image/config change.
+A successful Wrangler dry-run does not prove startup. A real Cloudflare
+staging deployment with fake data and negative JWT/tenant tests remains
+required. The frontend localStorage->API roundtrip and approval workflows
+also remain NO-GO blockers.
+
+Configure AUTONOMOUS_DB_EXPECTED_LOGIN as a **GitHub environment variable**
+for each deploy environment. App's APP_ENV defaults to production and
+disables /docs and /openapi.json.
