@@ -1,6 +1,7 @@
 """Migration integration test for disposable PostgreSQL in CI."""
 import os
 from pathlib import Path
+from uuid import uuid4
 
 import psycopg
 import pytest
@@ -38,3 +39,39 @@ def test_postgres_initial_migration_and_rls():
                 (name,),
             ).fetchone()
             assert force == (True,), "Missing FORCE RLS: " + name
+
+
+
+@pytest.mark.skipif(not os.getenv("MIGRATION_TEST_DATABASE_URL"), reason="Requires disposable PostgreSQL")
+def test_non_owner_role_rls_does_not_leak_across_workspaces():
+    """Verify RLS with a real role; testing relrowsecurity=True alone is insufficient."""
+    url = os.environ["MIGRATION_TEST_DATABASE_URL"]
+    wid_a, wid_b, cid_a, cid_b = (uuid4() for _ in range(4))
+    with psycopg.connect(url, autocommit=True) as db:
+        db.execute("INSERT INTO evo_workspaces (id,name) VALUES (%s,'A'),(%s,'B')", (wid_a, wid_b))
+        db.execute(
+            "INSERT INTO evo_memberships (workspace_id, subject, role) VALUES "
+            "(%s,'alice','owner'),(%s,'bob','owner')", (wid_a, wid_b)
+        )
+        db.execute(
+            "INSERT INTO evo_companies (id,workspace_id,name) VALUES "
+            "(%s,%s,'Secret A'),(%s,%s,'Secret B')",
+            (cid_a,wid_a,cid_b,wid_b),
+        )
+        with db.transaction():
+            db.execute("SET LOCAL ROLE autonomous_os_api")
+            db.execute("SELECT set_config('app.subject', 'alice', true)")
+            # Missing authorized workspace context must fail closed.
+            assert db.execute("SELECT count(*) FROM evo_companies").fetchone() == (0,)
+            assert db.execute("SELECT count(*) FROM evo_workspaces").fetchone() == (1,)
+            db.execute("SELECT set_config('app.authorized_workspace', %s, true)", (str(wid_a),))
+            rows = db.execute("SELECT name FROM evo_companies").fetchall()
+            assert rows == [("Secret A",)]
+            assert db.execute(
+                "SELECT has_table_privilege(current_user, 'evo_audit_events', 'DELETE')"
+            ).fetchone() == (False,)
+        with db.transaction():
+            db.execute("SET LOCAL ROLE autonomous_os_api")
+            db.execute("SELECT set_config('app.subject', 'bob', true)")
+            db.execute("SELECT set_config('app.authorized_workspace', %s, true)", (str(wid_b),))
+            assert db.execute("SELECT name FROM evo_companies").fetchall() == [("Secret B",)]
