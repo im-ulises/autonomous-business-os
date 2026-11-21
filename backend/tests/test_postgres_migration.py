@@ -10,7 +10,7 @@ import pytest
 def test_postgres_initial_migration_and_rls():
     url = os.environ["MIGRATION_TEST_DATABASE_URL"]
     directory = Path(__file__).resolve().parent.parent / "migrations"
-    migrations = [(directory / name).read_text() for name in ("001_initial.sql", "002_business_extensions.sql", "003_fk_indexes.sql", "004_company_acl.sql")]
+    migrations = [(directory / name).read_text() for name in ("001_initial.sql", "002_business_extensions.sql", "003_fk_indexes.sql", "004_company_acl.sql", "005_rls_non_owner_api.sql")]
     expected = [
         "evo_workspaces", "evo_memberships", "evo_companies",
         "evo_clients", "evo_projects", "evo_tasks",
@@ -33,3 +33,8 @@ def test_postgres_initial_migration_and_rls():
                 (name,),
             ).fetchone()
             assert row == (True,), "Missing table or RLS: " + name
+            force = db.execute(
+                "SELECT relforcerowsecurity FROM pg_class WHERE relname = %s",
+                (name,),
+            ).fetchone()
+            assert force == (True,), "Missing FORCE RLS: " + name
