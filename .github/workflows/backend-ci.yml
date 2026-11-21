@@ -56,3 +56,6 @@ jobs:
           node-version: "22"
       - name: Dry run Cloudflare staging Worker
         run: npx --yes wrangler@4.164.0 deploy --dry-run --config wrangler.staging.jsonc
+
+      - name: Verify Container runtime guards
+        run: node --test cloudflare/container.test.mjs

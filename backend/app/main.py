@@ -15,13 +15,16 @@ from app.schemas import (
 )
 from app.security import Principal, authorize, get_principal
 
-app = FastAPI(title="Autonomous Business OS API", version="0.1.0")
+app = FastAPI(title="Autonomous Business OS API", version="0.1.1",
+    docs_url="/docs" if os.getenv("APP_ENV") == "development" else None,
+    redoc_url=None,
+    openapi_url="/openapi.json" if os.getenv("APP_ENV") == "development" else None)
 
 origins = [item.strip() for item in os.getenv("CORS_ORIGINS", "").split(",") if item.strip()]
 if origins:
     app.add_middleware(
         CORSMiddleware, allow_origins=origins, allow_credentials=False,
-        allow_methods=["GET", "POST", "PATCH"], allow_headers=["Authorization", "Content-Type"],
+        allow_methods=["GET", "POST", "PATCH", "PUT"], allow_headers=["Authorization", "Content-Type"],
     )
 
 
@@ -34,6 +37,7 @@ def healthz():
 def readyz(db: Session = Depends(get_db)):
     try:
         db.execute(text("SELECT 1 FROM evo_workspaces LIMIT 1"))
+        db.execute(text("SELECT 1 FROM evo_software_roadmaps LIMIT 1"))
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Database is not ready") from exc
     return {"status": "ready"}
