@@ -131,3 +131,15 @@ class AuditOut(Out):
     entity_id: UUID
     details: dict
     occurred_at: datetime
+
+
+class CompanyGrantIn(BaseModel):
+    company_id: UUID
+    subject: str = Field(min_length=1, max_length=255)
+    role: Literal["editor", "viewer"]
+
+
+class CompanyGrantOut(Out):
+    company_id: UUID
+    subject: str
+    role: Literal["editor", "viewer"]

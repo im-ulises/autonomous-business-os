@@ -37,6 +37,15 @@ class Company(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 
+class CompanyMembership(Base):
+    """Company-level ACL. Workspace membership alone never grants company access."""
+    __tablename__ = "evo_company_memberships"
+    company_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("evo_companies.id", ondelete="CASCADE"), primary_key=True)
+    subject: Mapped[str] = mapped_column(String(255), primary_key=True)
+    role: Mapped[str] = mapped_column(String(20), nullable=False)
+
+
+
 class Client(Base):
     __tablename__ = "evo_clients"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
