@@ -40,4 +40,4 @@ jobs:
               assert "hyperdrive" not in config  # Binding created only after safe DB login.
           PY
       - name: Verify Python Worker package compatibility in Pyodide
-        run: uv run --python 3.13 pywrangler deploy --dry-run --config wrangler.python.staging.jsonc
+        run: uv run --python 3.13 pywrangler deploy --dry-run
