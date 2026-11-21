@@ -8,10 +8,9 @@ import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import PyJWKClient, PyJWTError
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from app.db import get_db
 from app.models import Membership, Company, CompanyMembership, Project, Task
 
 bearer = HTTPBearer(auto_error=False)
@@ -58,6 +57,12 @@ def authorize(db: Session, workspace_id: UUID, principal: Principal, *, write: b
         raise HTTPException(status_code=403, detail="Owner access required")
     if write and membership.role not in ("owner", "editor"):
         raise HTTPException(status_code=403, detail="Write access required")
+    # This setting is derived from a validated JWT and verified membership,
+    # never directly from an untrusted URL parameter.
+    db.execute(
+        text("SELECT set_config('app.authorized_workspace', :wid, true)"),
+        {"wid": str(workspace_id)},
+    )
     return membership
 
 

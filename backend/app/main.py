@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from app.db import get_db
+from app.db import get_db, get_health_db
 from app.models import AuditEvent, Client, Company, CompanyMembership, Membership, Mission, Project, Task, Workspace
 from app.schemas import (
     AuditOut, ClientIn, ClientOut, CompanyIn, CompanyOut, MissionIn, MissionOut,
@@ -33,13 +33,20 @@ def healthz():
     return {"status": "up", "service": "autonomous-os-api"}
 
 
-@app.get("/readyz")
-def readyz(db: Session = Depends(get_db)):
+@app.get("/readyz", include_in_schema=False)
+def readyz(db: Session = Depends(get_health_db)):
     try:
-        db.execute(text("SELECT 1 FROM evo_workspaces LIMIT 1"))
-        db.execute(text("SELECT 1 FROM evo_software_roadmaps LIMIT 1"))
+        tables = db.scalar(text("""
+            SELECT count(*) FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname='public'
+              AND c.relname IN ('evo_workspaces','evo_software_roadmaps','evo_company_memberships')
+              AND c.relrowsecurity AND c.relforcerowsecurity
+        """))
+        if tables != 3:
+            raise RuntimeError("Required migrations or FORCE RLS missing")
     except Exception as exc:
-        raise HTTPException(status_code=503, detail="Database is not ready") from exc
+        raise HTTPException(status_code=503, detail="Database schema or RLS is not ready") from exc
     return {"status": "ready"}
 
 

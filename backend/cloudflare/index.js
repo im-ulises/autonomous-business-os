@@ -4,11 +4,11 @@ import { DurableObject } from "cloudflare:workers";
 // Containers are NOT rolled automatically when that image or secrets change.
 const PORT = 8000;
 const IDLE_MS = 10 * 60 * 1000;
-const REQUIRED = ["DATABASE_URL", "JWT_ISSUER", "JWT_AUDIENCE", "JWT_JWKS_URL"];
+const REQUIRED = ["DATABASE_URL", "DB_EXPECTED_LOGIN", "JWT_ISSUER", "JWT_AUDIENCE", "JWT_JWKS_URL"];
 const utf8 = new TextEncoder();
 
 async function configurationFingerprint(image, env) {
-  const data = JSON.stringify([image, ...REQUIRED.map(k => env[k]), env.CORS_ORIGINS ?? ""]);
+  const data = JSON.stringify([image, ...REQUIRED.map(k => env[k]), env.CORS_ORIGINS ?? "", env.APP_ENV ?? "production"]);
   const bytes = await crypto.subtle.digest("SHA-256", utf8.encode(data));
   return Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, "0")).join("");
 }
@@ -56,6 +56,7 @@ export class AutonomousApiContainer extends DurableObject {
           JWT_AUDIENCE: this.env.JWT_AUDIENCE,
           JWT_JWKS_URL: this.env.JWT_JWKS_URL,
           CORS_ORIGINS: this.env.CORS_ORIGINS ?? "",
+          DB_EXPECTED_LOGIN: this.env.DB_EXPECTED_LOGIN,
           APP_ENV: this.env.APP_ENV ?? "production",
         },
       });

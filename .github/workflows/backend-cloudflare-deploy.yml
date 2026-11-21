@@ -26,6 +26,7 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       DATABASE_URL: ${{ secrets.AUTONOMOUS_DATABASE_URL }}
+      DB_EXPECTED_LOGIN: ${{ vars.AUTONOMOUS_DB_EXPECTED_LOGIN }}
       JWT_ISSUER: ${{ secrets.AUTONOMOUS_JWT_ISSUER }}
       JWT_AUDIENCE: ${{ secrets.AUTONOMOUS_JWT_AUDIENCE }}
       JWT_JWKS_URL: ${{ secrets.AUTONOMOUS_JWT_JWKS_URL }}
@@ -40,7 +41,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for key in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID DATABASE_URL JWT_ISSUER JWT_AUDIENCE JWT_JWKS_URL; do
+          for key in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID DATABASE_URL DB_EXPECTED_LOGIN JWT_ISSUER JWT_AUDIENCE JWT_JWKS_URL; do
             if [[ -z "${!key:-}" ]]; then
               echo "::error::Missing required secret $key"
               exit 1
@@ -52,7 +53,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for key in DATABASE_URL JWT_ISSUER JWT_AUDIENCE JWT_JWKS_URL CORS_ORIGINS; do
+          for key in DATABASE_URL DB_EXPECTED_LOGIN JWT_ISSUER JWT_AUDIENCE JWT_JWKS_URL CORS_ORIGINS; do
             printf '%s' "${!key:-}" | npx --yes wrangler@4.164.0 secret put "$key" --config "$CONFIG"
           done
       - name: List deployment status
