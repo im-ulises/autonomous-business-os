@@ -42,3 +42,16 @@ been performed by merely committing these files.
 - Audit records are not yet tamper-evident.
 - Multi-company ACLs, documents, deliverables, proposals, brand assets and
   agent events need later implementation.
+
+
+## Independent security review follow-up
+
+See PR #25 for the Grok-audit security remediations.
+Live Supabase has migrations 001-003 only. Additional migration 004
+introduces company ACLs; migration 005 enforces per-workspace RLS
+for a non-owner database role. Do not apply 005 until a trusted operator
+has provisioned an initial workspace and a dedicated non-owner LOGIN
+credential with GRANT to autonomous_os_api, and a disposable Postgres
+integration test is green. No production credentials belong in source.
+Production and staging remain blocked pending Cloudflare cold start and
+frontend/API contract reconciliation.
