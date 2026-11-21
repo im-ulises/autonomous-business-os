@@ -5,7 +5,10 @@ Status (2026-11-20): **NOT DEPLOYED / NO-GO FOR PRODUCTION**.
   Containers API returned HTTP 401 with an explicit Workers Paid requirement.
 - The deployed frontend still uses localStorage. There is no end-user auth UI.
 - The Supabase project \`pbjsynsaavhokloonnem\` is a dedicated project; all
-  migration changes are versioned in backend/migrations.
+  migration changes are versioned in backend/migrations. Nine migrations 001–009
+  are applied and verified on the dedicated Supabase project. The post-migration
+  security advisor reports zero findings; the performance advisor reports
+  only unused indexes because this database has no customer records yet.
 - Database login \`autonomous_os_login\` is **NOLOGIN** on purpose; it must not
   be used until an operator provisions a credential through a secret manager.
 
