@@ -1,13 +1,15 @@
 """Fail-closed OIDC JWT authentication. Workspace membership is stored server-side."""
 import os
+import json
+import time
 from dataclasses import dataclass
 from functools import lru_cache
 from uuid import UUID
 
 import jwt
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jwt import PyJWKClient, PyJWTError
+from jwt import PyJWKClient, PyJWTError, PyJWKSet
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
@@ -26,30 +28,82 @@ def jwks_client(url: str) -> PyJWKClient:
     return PyJWKClient(url, cache_jwk_set=True, lifespan=300)
 
 
-def get_principal(credentials: HTTPAuthorizationCredentials | None = Depends(bearer)) -> Principal:
-    issuer = os.getenv("JWT_ISSUER", "").rstrip("/")
-    audience = os.getenv("JWT_AUDIENCE", "")
-    jwks_url = os.getenv("JWT_JWKS_URL", "")
-    if not issuer or not audience or not jwks_url or not jwks_url.startswith("https://"):
-        raise HTTPException(status_code=503, detail="Authentication is not configured")
+# Public JWKS cache scoped to the Worker isolate. Signatures are checked on
+# every request; only keys may be cached briefly for 300 seconds.
+_worker_jwks_cache: dict[str, tuple[float, PyJWKSet]] = {}
+
+
+async def _worker_signing_key(token: str, url: str):
+    header = jwt.get_unverified_header(token)
+    if header.get("alg") not in ("RS256", "ES256"):
+        raise ValueError("Unsupported JWT algorithm")
+    kid = header.get("kid")
+    if not isinstance(kid, str) or not kid:
+        raise ValueError("JWT key ID missing")
+
+    def lookup(keys: PyJWKSet):
+        for item in keys.keys:
+            if item.key_id == kid and item.algorithm_name == header["alg"]:
+                return item.key
+        return None
+
+    cached = _worker_jwks_cache.get(url)
+    if cached and cached[0] > time.monotonic():
+        found = lookup(cached[1])
+        if found is not None:
+            return found
+
+    # Workers' supported network primitive is JS fetch; urllib is unsuitable
+    # for network calls inside Pyodide.
+    from js import fetch
+    response = await fetch(url)
+    if not response.ok:
+        raise ValueError("JWKS unavailable")
+    raw = json.loads(str(await response.text()))
+    jwks = PyJWKSet.from_dict(raw)
+    key = lookup(jwks)
+    if key is None:
+        raise ValueError("No matching JWKS public key")
+    _worker_jwks_cache[url] = (time.monotonic() + 300, jwks)
+    return key
+
+
+async def get_principal(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
+) -> Principal:
+    env = request.scope.get("env")
+
+    def config(name: str):
+        return str(getattr(env, name, "") or "") if env is not None else os.getenv(name, "")
+
+    issuer = config("JWT_ISSUER").rstrip("/")
+    audience = config("JWT_AUDIENCE")
+    jwks_url = config("JWT_JWKS_URL")
+    if not issuer or not audience or not jwks_url.startswith("https://"):
+        raise HTTPException(status_code=503, detail="Authentication not configured")
     if credentials is None or credentials.scheme.lower() != "bearer":
-        raise HTTPException(status_code=401, detail="Bearer token required", headers={"WWW-Authenticate": "Bearer"})
+        raise HTTPException(status_code=401, detail="Bearer token required",
+                            headers={"WWW-Authenticate": "Bearer"})
     try:
-        key = jwks_client(jwks_url).get_signing_key_from_jwt(credentials.credentials)
+        if env is not None:
+            key = await _worker_signing_key(credentials.credentials, jwks_url)
+        else:
+            key = jwks_client(jwks_url).get_signing_key_from_jwt(credentials.credentials).key
         claims = jwt.decode(
-            credentials.credentials, key.key,
-            algorithms=["RS256", "ES256"], audience=audience, issuer=issuer,
+            credentials.credentials, key, algorithms=["RS256", "ES256"],
+            audience=audience, issuer=issuer,
             options={"require": ["sub", "exp", "iat", "iss", "aud"]},
         )
         subject = claims["sub"]
         if not isinstance(subject, str) or not subject.strip():
             raise ValueError("Invalid subject")
-        # Never treat a service-role or anonymous JWT as an end-user identity.
         if claims.get("role") != "authenticated":
-            raise ValueError("Only authenticated user access tokens are accepted")
+            raise ValueError("Only authenticated end-user tokens accepted")
         return Principal(subject=subject)
-    except (PyJWTError, ValueError) as exc:
-        raise HTTPException(status_code=401, detail="Invalid or expired token", headers={"WWW-Authenticate": "Bearer"}) from exc
+    except (PyJWTError, ValueError, TypeError) as exc:
+        raise HTTPException(status_code=401, detail="Invalid or expired token",
+                            headers={"WWW-Authenticate": "Bearer"}) from exc
 
 
 def authorize(db: Session, workspace_id: UUID, principal: Principal, *, write: bool = False, owner: bool = False) -> Membership:
