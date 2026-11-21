@@ -34,6 +34,8 @@ class Company(Base):
     workspace_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("evo_workspaces.id", ondelete="CASCADE"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(160), nullable=False)
     description: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    short: Mapped[str] = mapped_column(String(40), default="", nullable=False)
+    accent: Mapped[str] = mapped_column(String(32), default="", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 
@@ -52,6 +54,13 @@ class Client(Base):
     company_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("evo_companies.id", ondelete="CASCADE"), index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(160), nullable=False)
     notes: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    description: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    industry: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    brand_color: Mapped[str] = mapped_column(String(32), default="", nullable=False)
+    website: Mapped[str] = mapped_column(String(2048), default="", nullable=False)
+    contact_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    contact_email: Mapped[str] = mapped_column(String(320), default="", nullable=False)
+    contact_phone: Mapped[str] = mapped_column(String(80), default="", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 

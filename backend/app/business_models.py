@@ -1,8 +1,9 @@
 """Business extensions for the mature frontend. No agent execution authority."""
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text, Uuid
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, JSON, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models import Base
@@ -42,6 +43,23 @@ class Proposal(Base):
     status: Mapped[str] = mapped_column(String(20), default="draft", nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="MXN", nullable=False)
     document: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    template_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("evo_proposal_templates.id", ondelete="SET NULL"))
+    quote_number: Mapped[str] = mapped_column(String(100), default="", nullable=False)
+    client_name: Mapped[str] = mapped_column(String(200), default="", nullable=False)
+    client_contact: Mapped[str] = mapped_column(String(200), default="", nullable=False)
+    issue_date: Mapped[date | None] = mapped_column(Date)
+    valid_until: Mapped[date | None] = mapped_column(Date)
+    introduction: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    scope: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    deliverables: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    timeline: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    terms: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    exclusions: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    notes: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    tax_percent: Mapped[Decimal] = mapped_column(Numeric(7,3), default=0, nullable=False)
+    deposit_percent: Mapped[Decimal] = mapped_column(Numeric(7,3), default=0, nullable=False)
+    template_snapshot: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
     revision: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now, nullable=False)
 
