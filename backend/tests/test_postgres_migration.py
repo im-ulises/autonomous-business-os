@@ -10,13 +10,14 @@ import pytest
 def test_postgres_initial_migration_and_rls():
     url = os.environ["MIGRATION_TEST_DATABASE_URL"]
     directory = Path(__file__).resolve().parent.parent / "migrations"
-    migrations = [(directory / name).read_text() for name in ("001_initial.sql", "002_business_extensions.sql", "003_fk_indexes.sql")]
+    migrations = [(directory / name).read_text() for name in ("001_initial.sql", "002_business_extensions.sql", "003_fk_indexes.sql", "004_company_acl.sql")]
     expected = [
         "evo_workspaces", "evo_memberships", "evo_companies",
         "evo_clients", "evo_projects", "evo_tasks",
         "evo_missions", "evo_audit_events",
         "evo_departments", "evo_brand_sheets", "evo_proposals",
         "evo_documents", "evo_deliverables", "evo_software_roadmaps",
+        "evo_company_memberships",
     ]
     with psycopg.connect(url, autocommit=True) as db:
         for sql in migrations:
