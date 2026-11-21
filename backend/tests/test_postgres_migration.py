@@ -11,7 +11,7 @@ import pytest
 def test_postgres_initial_migration_and_rls():
     url = os.environ["MIGRATION_TEST_DATABASE_URL"]
     directory = Path(__file__).resolve().parent.parent / "migrations"
-    migrations = [(directory / name).read_text() for name in ("001_initial.sql", "002_business_extensions.sql", "003_fk_indexes.sql", "004_company_acl.sql", "005_rls_non_owner_api.sql", "006_frontend_operational_entities.sql", "007_dedicated_login_prerequisites.sql", "008_same_company_integrity.sql")]
+    migrations = [(directory / name).read_text() for name in ("001_initial.sql", "002_business_extensions.sql", "003_fk_indexes.sql", "004_company_acl.sql", "005_rls_non_owner_api.sql", "006_frontend_operational_entities.sql", "007_dedicated_login_prerequisites.sql", "008_same_company_integrity.sql", "009_fk_performance_rls_initplan.sql")]
     expected = [
         "evo_workspaces", "evo_memberships", "evo_companies",
         "evo_clients", "evo_projects", "evo_tasks",
