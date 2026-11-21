@@ -11,7 +11,7 @@ import pytest
 def test_postgres_initial_migration_and_rls():
     url = os.environ["MIGRATION_TEST_DATABASE_URL"]
     directory = Path(__file__).resolve().parent.parent / "migrations"
-    migrations = [(directory / name).read_text() for name in ("001_initial.sql", "002_business_extensions.sql", "003_fk_indexes.sql", "004_company_acl.sql", "005_rls_non_owner_api.sql")]
+    migrations = [(directory / name).read_text() for name in ("001_initial.sql", "002_business_extensions.sql", "003_fk_indexes.sql", "004_company_acl.sql", "005_rls_non_owner_api.sql", "006_frontend_operational_entities.sql", "007_dedicated_login_prerequisites.sql", "008_same_company_integrity.sql", "009_fk_performance_rls_initplan.sql")]
     expected = [
         "evo_workspaces", "evo_memberships", "evo_companies",
         "evo_clients", "evo_projects", "evo_tasks",
@@ -19,6 +19,11 @@ def test_postgres_initial_migration_and_rls():
         "evo_departments", "evo_brand_sheets", "evo_proposals",
         "evo_documents", "evo_deliverables", "evo_software_roadmaps",
         "evo_company_memberships",
+        "evo_project_details", "evo_software_products", "evo_software_phases",
+        "evo_software_milestones", "evo_software_acceptances",
+        "evo_department_lessons", "evo_proposal_templates",
+        "evo_proposal_line_items", "evo_proposal_approval_snapshots",
+        "evo_legacy_import_ids",
     ]
     with psycopg.connect(url, autocommit=True) as db:
         for sql in migrations:
@@ -75,3 +80,25 @@ def test_non_owner_role_rls_does_not_leak_across_workspaces():
             db.execute("SELECT set_config('app.subject', 'bob', true)")
             db.execute("SELECT set_config('app.authorized_workspace', %s, true)", (str(wid_b),))
             assert db.execute("SELECT name FROM evo_companies").fetchall() == [("Secret B",)]
+
+
+
+@pytest.mark.skipif(not os.getenv("MIGRATION_TEST_DATABASE_URL"), reason="Requires disposable PostgreSQL")
+def test_composite_fk_blocks_cross_company_clients():
+    """No SQL handler may attach another company's client to a project."""
+    url = os.environ["MIGRATION_TEST_DATABASE_URL"]
+    wid, company_a, company_b, client_a, project_b = (uuid4() for _ in range(5))
+    with psycopg.connect(url) as db:
+        db.execute("INSERT INTO evo_workspaces(id,name) VALUES (%s,'Test')", (wid,))
+        db.execute("INSERT INTO evo_companies(id,workspace_id,name) VALUES "
+                   "(%s,%s,'A'),(%s,%s,'B')",
+                   (company_a,wid,company_b,wid))
+        db.execute("INSERT INTO evo_clients(id,company_id,name) VALUES (%s,%s,'A Client')",
+                   (client_a,company_a))
+        with pytest.raises(psycopg.errors.ForeignKeyViolation):
+            db.execute(
+                "INSERT INTO evo_projects(id,company_id,client_id,name) "
+                "VALUES (%s,%s,%s,'Invalid cross-company link')",
+                (project_b,company_b,client_a),
+            )
+        db.rollback()

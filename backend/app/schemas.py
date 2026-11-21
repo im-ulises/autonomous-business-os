@@ -24,6 +24,8 @@ class WorkspaceOut(Out):
 class CompanyIn(BaseModel):
     name: str = Field(min_length=1, max_length=160)
     description: str = Field(default="", max_length=10000)
+    short: str = Field(default="", max_length=40)
+    accent: str = Field(default="", max_length=32)
 
 
 class CompanyOut(Out):
@@ -31,6 +33,8 @@ class CompanyOut(Out):
     workspace_id: UUID
     name: str
     description: str
+    short: str
+    accent: str
     created_at: datetime
 
 
@@ -38,6 +42,13 @@ class ClientIn(BaseModel):
     company_id: UUID
     name: str = Field(min_length=1, max_length=160)
     notes: str = Field(default="", max_length=10000)
+    description: str = Field(default="", max_length=50000)
+    industry: str = Field(default="", max_length=160)
+    brand_color: str = Field(default="", max_length=32)
+    website: str = Field(default="", max_length=2048)
+    contact_name: str = Field(default="", max_length=160)
+    contact_email: str = Field(default="", max_length=320)
+    contact_phone: str = Field(default="", max_length=80)
 
 
 class ClientOut(Out):
@@ -45,6 +56,13 @@ class ClientOut(Out):
     company_id: UUID
     name: str
     notes: str
+    description: str
+    industry: str
+    brand_color: str
+    website: str
+    contact_name: str
+    contact_email: str
+    contact_phone: str
     created_at: datetime
 
 
@@ -108,6 +126,8 @@ class MissionIn(BaseModel):
     title: str = Field(min_length=1, max_length=240)
     outcome: str = Field(min_length=1, max_length=50000)
     executor_hint: Executor = "unassigned"
+    assignee: Literal["claude","codex","grok","unassigned"] = "unassigned"
+    planning_state: Literal["local_draft","planned"] = "local_draft"
 
 
 class MissionOut(Out):
@@ -117,6 +137,8 @@ class MissionOut(Out):
     title: str
     outcome: str
     executor_hint: Executor
+    assignee: Literal["claude","codex","grok","unassigned"]
+    planning_state: Literal["local_draft","planned"]
     status: Literal["draft", "approved", "submitted", "running", "succeeded", "failed"]
     external_run_id: str | None
     created_at: datetime

@@ -81,9 +81,9 @@ def test_proposal_workflow_is_not_autonomous_outreach():
         proposal_id = proposal.json()["id"]
         assert client.patch(f"/v1/workspaces/{wid}/proposals/{proposal_id}", json={
             "revision":1, "status":"approved"
-        }).status_code == 200
+        }).status_code == 422
         assert client.patch(f"/v1/workspaces/{wid}/proposals/{proposal_id}", json={
-            "revision":2, "title":"Silently changed approved quote"
-        }).status_code == 409
+            "revision":1, "title":"Still an editable draft"
+        }).status_code == 200
     finally:
         cleanup(engine)

@@ -94,12 +94,11 @@ def test_approved_proposals_and_deliverables_cannot_be_rolled_back():
             "company_id":cid,"title":"Quote","document":{"price":100}
         }).json()
         prop_id = proposal["id"]
+        # The generic API can no longer confer financial approval.
         assert client.patch(f"/v1/workspaces/{wid}/proposals/{prop_id}",json={
             "revision":1, "status":"approved"
-        }).status_code == 200
-        assert client.patch(f"/v1/workspaces/{wid}/proposals/{prop_id}",json={
-            "revision":2, "status":"draft", "document":{"price":1}
-        }).status_code == 409
+        }).status_code == 422
+        # Review through evidence-backed typed /quotes/{id}/approve instead.
         deliverable = client.post(f"/v1/workspaces/{wid}/deliverables",json={
             "project_id":pid,"title":"Video","url":"https://example.com/video"
         }).json()

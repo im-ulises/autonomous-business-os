@@ -265,3 +265,8 @@ def revoke_company(workspace_id: UUID, company_id: UUID, subject: str, db: Sessi
 # Business modules are kept outside the core CRUD service for independent evolution.
 from app.business_api import router as business_router
 app.include_router(business_router)
+
+
+# Typed software/quote/lesson modules registered before application startup.
+from app.operational_api import router as operational_router
+app.include_router(operational_router)

@@ -44,6 +44,9 @@ def get_principal(credentials: HTTPAuthorizationCredentials | None = Depends(bea
         subject = claims["sub"]
         if not isinstance(subject, str) or not subject.strip():
             raise ValueError("Invalid subject")
+        # Never treat a service-role or anonymous JWT as an end-user identity.
+        if claims.get("role") != "authenticated":
+            raise ValueError("Only authenticated user access tokens are accepted")
         return Principal(subject=subject)
     except (PyJWTError, ValueError) as exc:
         raise HTTPException(status_code=401, detail="Invalid or expired token", headers={"WWW-Authenticate": "Bearer"}) from exc
