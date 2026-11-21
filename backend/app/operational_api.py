@@ -246,8 +246,10 @@ def create_software(workspace_id: UUID, data: SoftwareIn,
                 phase_id=row.id, milestone_order=j, **item.model_dump(),
             ))
     audit(db, workspace_id, actor, "create", "software_product", product.id)
+    db.flush()
+    response = software_record(db, product)  # RLS context expires on COMMIT.
     db.commit()
-    return software_record(db, product)
+    return response
 
 
 @router.post("/software-milestones/{milestone_id}/reviews", status_code=201)
@@ -403,8 +405,10 @@ def create_quote(workspace_id: UUID, data: QuoteIn,
         db.add(ProposalLineItem(proposal_id=quote.id,item_order=index,**item.model_dump()))
     db.flush()
     audit(db, workspace_id, actor, "draft", "quote", quote.id)
+    db.flush()
+    response = quote_data(db, quote)  # RLS context expires on COMMIT.
     db.commit()
-    return quote_data(db, quote)
+    return response
 
 
 @router.post("/quotes/{quote_id}/approve", status_code=201)
