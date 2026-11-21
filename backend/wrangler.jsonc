@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "autonomous-os-python-api-staging",
+  "main": "worker.py",
+  "compatibility_date": "2026-11-20",
+  "compatibility_flags": [
+    "python_workers"
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
