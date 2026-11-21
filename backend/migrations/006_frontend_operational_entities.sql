@@ -14,6 +14,12 @@ ALTER TABLE evo_clients ADD COLUMN IF NOT EXISTS contact_name varchar(160) NOT N
 ALTER TABLE evo_clients ADD COLUMN IF NOT EXISTS contact_email varchar(320) NOT NULL DEFAULT '';
 ALTER TABLE evo_clients ADD COLUMN IF NOT EXISTS contact_phone varchar(80) NOT NULL DEFAULT '';
 
+ALTER TABLE evo_missions ADD COLUMN IF NOT EXISTS assignee varchar(20) NOT NULL DEFAULT 'unassigned'
+  CHECK(assignee IN ('claude','codex','grok','unassigned'));
+ALTER TABLE evo_missions ADD COLUMN IF NOT EXISTS planning_state varchar(20) NOT NULL DEFAULT 'local_draft'
+  CHECK(planning_state IN ('local_draft','planned'));
+ALTER TABLE evo_documents ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
+
 CREATE TABLE IF NOT EXISTS evo_project_details (
   project_id uuid PRIMARY KEY REFERENCES evo_projects(id) ON DELETE CASCADE,
   brief text NOT NULL DEFAULT '',

@@ -71,6 +71,7 @@ class Document(Base):
     project_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("evo_projects.id", ondelete="SET NULL"))
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     markdown: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
     revision: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now, nullable=False)
 

@@ -97,6 +97,8 @@ class Mission(Base):
     title: Mapped[str] = mapped_column(String(240), nullable=False)
     outcome: Mapped[str] = mapped_column(Text, nullable=False)
     executor_hint: Mapped[str] = mapped_column(String(30), default="unassigned", nullable=False)
+    assignee: Mapped[str] = mapped_column(String(20), default="unassigned", nullable=False)
+    planning_state: Mapped[str] = mapped_column(String(20), default="local_draft", nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="draft", nullable=False)
     external_run_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)

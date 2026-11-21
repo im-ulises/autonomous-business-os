@@ -126,6 +126,8 @@ class MissionIn(BaseModel):
     title: str = Field(min_length=1, max_length=240)
     outcome: str = Field(min_length=1, max_length=50000)
     executor_hint: Executor = "unassigned"
+    assignee: Literal["claude","codex","grok","unassigned"] = "unassigned"
+    planning_state: Literal["local_draft","planned"] = "local_draft"
 
 
 class MissionOut(Out):
@@ -135,6 +137,8 @@ class MissionOut(Out):
     title: str
     outcome: str
     executor_hint: Executor
+    assignee: Literal["claude","codex","grok","unassigned"]
+    planning_state: Literal["local_draft","planned"]
     status: Literal["draft", "approved", "submitted", "running", "succeeded", "failed"]
     external_run_id: str | None
     created_at: datetime
