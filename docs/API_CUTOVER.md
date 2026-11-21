@@ -1,8 +1,8 @@
 # Autonomous Business OS — safe backend cutover plan
 
 Status (2026-11-20): **NOT DEPLOYED / NO-GO FOR PRODUCTION**.
-- Cloudflare account does not currently have Containers enabled; the Cloudflare
-  Containers API returned HTTP 401 with an explicit Workers Paid requirement.
+- Cloudflare Containers are explicitly out of scope. Target is FastAPI on
+  Python Workers with Hyperdrive; no paid Containers subscription is needed.
 - The deployed frontend still uses localStorage. There is no end-user auth UI.
 - The Supabase project \`pbjsynsaavhokloonnem\` is a dedicated project; all
   migration changes are versioned in backend/migrations. Nine migrations 001–009
@@ -53,9 +53,9 @@ Status (2026-11-20): **NOT DEPLOYED / NO-GO FOR PRODUCTION**.
 5. Configure Supabase Auth to use a verifiable asymmetric signing key, verify
    JWT claims (issuer, audience, exp, iat, role), and bootstrap initial workspace
    owner with a real verified subject. Never invent an owner subject.
-6. Enable Cloudflare Workers Paid only after explicit billing approval; then
-   deploy Cloudflare Containers into a separate staging Worker with environment
-   secrets. Never use production client data for staging.
+6. Deploy a Python Worker to a separate staging name on the existing Workers
+   entitlement using a dedicated Hyperdrive binding and real OIDC secrets.
+   Do not enable paid plans automatically or use production client data.
 7. Verify a real Container cold start, healthy database connection, negative
    401/403 checks, evidence-backed review, and image/secret rotation.
 8. Add a reviewed, read-only localStorage import preview and explicit
@@ -67,7 +67,7 @@ Status (2026-11-20): **NOT DEPLOYED / NO-GO FOR PRODUCTION**.
 
 ## Known blockers not solved by passing unit tests
 
-- No active Cloudflare Container account entitlement.
+- No Python Worker with a real JWT issuer and Hyperdrive is deployed yet.
 - No trusted end-user OIDC login / initial owner workspace yet.
 - Dedicated DB account has no password/login yet and the FastAPI instance
   therefore cannot connect to the live database.

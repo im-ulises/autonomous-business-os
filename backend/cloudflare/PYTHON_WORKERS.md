@@ -21,7 +21,8 @@ The actual Python Workers runtime uses Pyodide, not CPython + Uvicorn.
 Run from backend/ with Node 22 and uv installed:
 
 ```sh
-uv run --python 3.13 pywrangler deploy --dry-run --config wrangler.python.staging.jsonc
+uv run --python 3.13 pywrangler deploy --dry-run
+uv run --python 3.13 pywrangler dev
 ```
 
 This dry-run **does not prove** successful edge startup, JWT verification,
@@ -49,10 +50,35 @@ PostgreSQL connectivity, authorization or performance.
 7. Staging and production require separate database/identity configurations
    and protected deployment workflows.
 
-**Do not run old `wrangler.staging.jsonc`**; that is an unmerged historical
-Container candidate. This branch uses the **`wrangler.python.*.jsonc`**
-configuration exclusively.
+The root `wrangler.jsonc` and `wrangler.staging.jsonc` now target the
+Python Worker exclusively. `wrangler.production.jsonc` is independently
+reserved for production. Do not deploy until the real identity and
+Hyperdrive connection are provisioned.
 
 Docs:
 https://developers.cloudflare.com/workers/languages/python/packages/fastapi/
 https://developers.cloudflare.com/hyperdrive/examples/python-workers/
+
+
+## Worker binding behavior
+
+Cloudflare sends secrets and Hyperdrive connection properties via the ASGI
+\`request.scope["env"]\` binding, not \`os.environ\`. The backend's auth
+dependency fetches the Supabase JWKS using the Workers JS \`fetch\` API
+and validates every JWT signature with RS256/ES256 and issuer/audience.
+Database sessions use synchronous SQLAlchemy+pg8000 with a separate
+connection per request; the per-isolate lock serializes DB access. The
+transaction always checks the expected non-owner login, runs SET LOCAL ROLE,
+and stores the validated user and membership-authorized workspace in
+transaction-local RLS settings. No shared DB connection should persist
+after a request.
+
+All requests to \`/v1/\` return cache-control: no-store. Hyperdrive query
+caching MUST be disabled on its connection configuration because SQL
+policy predicates depend on per-transaction tenant/user settings.
+Untrusted origins cannot pass browser CORS preflight. A missing JWT
+issuer, Hyperdrive binding or restricted DB login returns a safe error.
+
+Runtime tests include synthetic bindings/CORS, signed JWT rejection,
+native PostgreSQL migrations and a local workerd cold-start health
+check. Successful checks do not replace real cloud staging E2E tests.
