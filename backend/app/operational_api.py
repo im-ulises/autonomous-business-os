@@ -14,13 +14,13 @@ from sqlalchemy import select, update, inspect
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import AuditEvent, Client, Company, Project
+from app.models import AuditEvent, Client, Company, Project, Task
 from app.business_models import Department, Proposal
 from app.operational_models import (
-    DepartmentLesson, ProposalTemplate, ProposalLineItem, ProposalApprovalSnapshot,
+    ProjectDetail, DepartmentLesson, ProposalTemplate, ProposalLineItem, ProposalApprovalSnapshot,
     SoftwareProduct, SoftwarePhase, SoftwareMilestone, SoftwareAcceptance,
 )
-from app.security import Principal, authorize, authorize_company, get_principal
+from app.security import Principal, authorize, authorize_company, authorize_project, get_principal
 
 class StrictIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -211,6 +211,57 @@ def software_record(db: Session, product: SoftwareProduct):
             phase_data["milestones"].append(item)
         data["phases"].append(phase_data)
     return data
+
+
+
+
+class ProjectDetailsIn(StrictIn):
+    priority: Literal["low","normal","high","critical"] | None = None
+    stage_override: Literal["idea","planning","active","waiting","completed"] | None = None
+    client_id: UUID | None = None
+    due_date: date | None = None
+    brief: str = Field(default="", max_length=50000)
+    notes: str = Field(default="", max_length=50000)
+
+
+@router.get("/project-details/{project_id}")
+def project_details(workspace_id: UUID, project_id: UUID,
+                    db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    project = authorize_project(db, workspace_id, project_id, actor)
+    details = db.get(ProjectDetail, project_id)
+    tasks = db.scalars(select(Task).where(Task.project_id == project_id).order_by(Task.created_at)).all()
+    return {
+        "project_id":project_id,
+        "priority":project.priority,
+        "stage_override":project.stage,
+        "client_id":project.client_id,
+        "due_date":project.due_date,
+        "brief":details.brief if details else "",
+        "notes":details.notes if details else "",
+        "updated_at":details.updated_at if details else project.updated_at,
+        "tasks":[{"id":x.id,"title":x.title,"done":x.status=="done"} for x in tasks],
+    }
+
+
+@router.put("/project-details/{project_id}")
+def save_project_details(workspace_id: UUID, project_id: UUID, data: ProjectDetailsIn,
+                         db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
+    project = authorize_project(db, workspace_id, project_id, actor, write=True)
+    validate_company_client(db, project.company_id, data.client_id)
+    if data.priority is not None: project.priority = data.priority
+    if data.stage_override is not None: project.stage = data.stage_override
+    if data.client_id is not None: project.client_id = data.client_id
+    if data.due_date is not None: project.due_date = data.due_date
+    details = db.get(ProjectDetail, project_id)
+    if details is None:
+        details = ProjectDetail(project_id=project_id)
+        db.add(details)
+    details.brief = data.brief
+    details.notes = data.notes
+    db.flush()
+    audit(db, workspace_id, actor, "update", "project_details", project_id)
+    db.commit()
+    return {"project_id":project_id, "updated":True}
 
 
 @router.get("/software-products")
