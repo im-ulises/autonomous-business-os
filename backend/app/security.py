@@ -8,10 +8,10 @@ import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import PyJWKClient, PyJWTError
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from app.db import get_db
-from app.models import Membership
+from app.models import Membership, Company, CompanyMembership, Project, Task
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -57,4 +57,59 @@ def authorize(db: Session, workspace_id: UUID, principal: Principal, *, write: b
         raise HTTPException(status_code=403, detail="Owner access required")
     if write and membership.role not in ("owner", "editor"):
         raise HTTPException(status_code=403, detail="Write access required")
+    # This setting is derived from a validated JWT and verified membership,
+    # never directly from an untrusted URL parameter.
+    if db.get_bind().dialect.name == "postgresql":
+        db.execute(
+            text("SELECT set_config('app.authorized_workspace', :wid, true)"),
+            {"wid": str(workspace_id)},
+        )
     return membership
+
+
+def authorize_company(
+    db: Session, workspace_id: UUID, company_id: UUID, principal: Principal,
+    *, write: bool = False,
+) -> Company:
+    """Workspace owner sees its companies; everyone else needs explicit company ACL."""
+    membership = authorize(db, workspace_id, principal, write=write)
+    company = db.scalar(
+        select(Company).where(Company.id == company_id, Company.workspace_id == workspace_id)
+    )
+    if company is None:
+        raise HTTPException(status_code=404, detail="Company not found in workspace")
+    if membership.role == "owner":
+        return company
+    grant = db.get(CompanyMembership, (company_id, principal.subject))
+    if grant is None or (write and grant.role != "editor"):
+        raise HTTPException(status_code=403, detail="No access to this company")
+    return company
+
+
+def authorize_project(
+    db: Session, workspace_id: UUID, project_id: UUID, principal: Principal,
+    *, write: bool = False,
+) -> Project:
+    project = db.scalar(
+        select(Project).join(Company, Project.company_id == Company.id)
+        .where(Project.id == project_id, Company.workspace_id == workspace_id)
+    )
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found in workspace")
+    authorize_company(db, workspace_id, project.company_id, principal, write=write)
+    return project
+
+
+def authorize_task(
+    db: Session, workspace_id: UUID, task_id: UUID, principal: Principal,
+    *, write: bool = False,
+) -> Task:
+    task = db.scalar(
+        select(Task).join(Project, Task.project_id == Project.id)
+        .join(Company, Project.company_id == Company.id)
+        .where(Task.id == task_id, Company.workspace_id == workspace_id)
+    )
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found in workspace")
+    authorize_company(db, workspace_id, db.get(Project, task.project_id).company_id, principal, write=write)
+    return task
