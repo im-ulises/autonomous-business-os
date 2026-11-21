@@ -59,10 +59,11 @@ def authorize(db: Session, workspace_id: UUID, principal: Principal, *, write: b
         raise HTTPException(status_code=403, detail="Write access required")
     # This setting is derived from a validated JWT and verified membership,
     # never directly from an untrusted URL parameter.
-    db.execute(
-        text("SELECT set_config('app.authorized_workspace', :wid, true)"),
-        {"wid": str(workspace_id)},
-    )
+    if db.get_bind().dialect.name == "postgresql":
+        db.execute(
+            text("SELECT set_config('app.authorized_workspace', :wid, true)"),
+            {"wid": str(workspace_id)},
+        )
     return membership
 
 
