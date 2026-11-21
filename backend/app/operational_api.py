@@ -428,14 +428,22 @@ def approve_quote(workspace_id: UUID, quote_id: UUID, data: ApproveQuoteIn,
     if result.rowcount != 1:
         db.rollback()
         raise HTTPException(status_code=409, detail="Quote version/status changed")
-    snapshot = {
-        "quote_id":str(quote_id), "revision":data.revision,
-        "evidence_url":evidence_url,"summary":data.summary,
-        "quote": {k:(str(v) if isinstance(v,(UUID,Decimal)) else v)
-                  for k,v in payload.items() if k != "items"},
-        "items":[{k:(str(v) if isinstance(v,(UUID,Decimal)) else v)
-                  for k,v in item.items()} for item in payload["items"]],
-    }
+    def json_safe(value):
+        if isinstance(value, (UUID, Decimal)):
+            return str(value)
+        if isinstance(value, (date, datetime)):
+            return value.isoformat()
+        if isinstance(value, dict):
+            return {k: json_safe(v) for k,v in value.items()}
+        if isinstance(value, list):
+            return [json_safe(x) for x in value]
+        return value
+    snapshot = json_safe({
+        "quote_id":quote_id, "revision":data.revision,
+        "evidence_url":evidence_url, "summary":data.summary,
+        "quote":{k:v for k,v in payload.items() if k != "items"},
+        "items":payload["items"],
+    })
     approval = ProposalApprovalSnapshot(
         proposal_id=quote_id, revision=data.revision,
         approved_by=actor.subject,snapshot=snapshot,

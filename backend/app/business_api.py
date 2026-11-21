@@ -237,6 +237,8 @@ def create_proposal(workspace_id: UUID, data: ProposalIn, db: Session = Depends(
 def update_proposal(workspace_id: UUID, entity_id: UUID, data: ProposalPatch, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
     authorize(db, workspace_id, actor, write=True)
     row = owned(db, workspace_id, Proposal, entity_id, actor, write=True)
+    if data.status == "approved":
+        raise HTTPException(status_code=422, detail="Use /quotes/{id}/approve with evidence and immutable snapshot")
     if data.status == "approved" or row.status == "approved":
         authorize(db, workspace_id, actor, owner=True)
     if row.status == "approved":
