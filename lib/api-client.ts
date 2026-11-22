@@ -23,6 +23,11 @@ export type ApiProject = {
   priority: "low" | "normal" | "high" | "critical";
   due_date?: string | null; client_id?: string | null; updated_at: string;
 };
+export type ApiTask = {
+  id: string; project_id: string; title: string;
+  status: "todo" | "doing" | "blocked" | "done";
+  due_date?: string | null; created_at: string; updated_at: string;
+};
 export type ApiMission = {
   id: string; company_id: string; project_id?: string | null;
   title: string; outcome: string; assignee: Mission["assignee"];
@@ -141,6 +146,27 @@ export class AutonomousApiClient {
   unshareProject(workspaceId: string, projectId: string, subject: string) {
     return this.request<void>("v1/workspaces/" + encodeURIComponent(workspaceId) +
       "/projects/" + encodeURIComponent(projectId) + "/members/" + encodeURIComponent(subject), "DELETE");
+  }
+
+  createCompany(workspaceId: string, name: string) {
+    return this.request<ApiCompany>("v1/workspaces/" + encodeURIComponent(workspaceId) +
+      "/companies", "POST", {name});
+  }
+  createProject(workspaceId: string, companyId: string, name: string) {
+    return this.request<ApiProject>("v1/workspaces/" + encodeURIComponent(workspaceId) +
+      "/projects", "POST", {company_id: companyId, name});
+  }
+  listTasks(workspaceId: string, projectId: string) {
+    return this.request<ApiTask[]>("v1/workspaces/" + encodeURIComponent(workspaceId) +
+      "/tasks?project_id=" + encodeURIComponent(projectId));
+  }
+  createTask(workspaceId: string, projectId: string, title: string) {
+    return this.request<ApiTask>("v1/workspaces/" + encodeURIComponent(workspaceId) +
+      "/tasks", "POST", {project_id: projectId, title});
+  }
+  updateTask(workspaceId: string, taskId: string, status: ApiTask["status"]) {
+    return this.request<ApiTask>("v1/workspaces/" + encodeURIComponent(workspaceId) +
+      "/tasks/" + encodeURIComponent(taskId), "PATCH", {status});
   }
   listCompanies(workspaceId: string) {
     return this.request<ApiCompany[]>("v1/workspaces/" + encodeURIComponent(workspaceId) + "/companies");
