@@ -78,6 +78,20 @@ class Project(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
 
+class ProjectMembership(Base):
+    """Per-project grant; no implicit access to the containing company."""
+    __tablename__ = "evo_project_memberships"
+    project_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("evo_projects.id", ondelete="CASCADE"), primary_key=True,
+    )
+    subject: Mapped[str] = mapped_column(String(255), primary_key=True)
+    role: Mapped[str] = mapped_column(String(20), nullable=False)
+    granted_by: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False,
+    )
+
+
 class Task(Base):
     __tablename__ = "evo_tasks"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
