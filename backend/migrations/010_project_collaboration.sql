@@ -32,7 +32,7 @@ GRANT SELECT, INSERT, DELETE ON public.evo_project_memberships TO autonomous_os_
 -- All helpers use only server-validated session settings. They have no user-
 -- supplied subject or workspace argument and are not callable by browser roles.
 CREATE OR REPLACE FUNCTION autonomous_os_internal.can_manage_workspace(p_workspace uuid)
-RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog AS $
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog AS $$
   SELECT p_workspace=NULLIF(current_setting('app.authorized_workspace',true),'')::uuid
     AND EXISTS (
       SELECT 1 FROM public.evo_memberships m
