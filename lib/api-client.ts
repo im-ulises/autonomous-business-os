@@ -62,6 +62,19 @@ export function missionFromApi(row: ApiMission): Mission {
   };
 }
 
+export type ApiWorkspaceMember = {
+  workspace_id: string;
+  subject: string;
+  role: "owner" | "editor" | "viewer";
+};
+export type ApiProjectMember = {
+  project_id: string;
+  subject: string;
+  role: "editor" | "viewer";
+  granted_by: string;
+  created_at: string;
+};
+
 export type TokenProvider = () => Promise<string>;
 
 export class AutonomousApiClient {
@@ -96,11 +109,38 @@ export class AutonomousApiClient {
       redirect: "error",
     });
     if (!result.ok) throw new Error("Business OS API responded " + result.status);
+    if (result.status === 204) return undefined as T;
     return result.json() as Promise<T>;
   }
 
   listWorkspaces() {
     return this.request<Array<{id:string; name:string; role:string}>>("v1/workspaces");
+  }
+
+  listWorkspaceMembers(workspaceId: string) {
+    return this.request<ApiWorkspaceMember[]>("v1/workspaces/" + encodeURIComponent(workspaceId) + "/members");
+  }
+  addWorkspaceMember(workspaceId: string, subject: string, role: "editor" | "viewer") {
+    return this.request<ApiWorkspaceMember>("v1/workspaces/" + encodeURIComponent(workspaceId) + "/members",
+      "POST", {subject, role});
+  }
+  removeWorkspaceMember(workspaceId: string, subject: string) {
+    return this.request<void>("v1/workspaces/" + encodeURIComponent(workspaceId) + "/members/" + encodeURIComponent(subject), "DELETE");
+  }
+  listSharedProjects(workspaceId: string) {
+    return this.request<ApiProject[]>("v1/workspaces/" + encodeURIComponent(workspaceId) + "/shared-projects");
+  }
+  listProjectMembers(workspaceId: string, projectId: string) {
+    return this.request<ApiProjectMember[]>("v1/workspaces/" + encodeURIComponent(workspaceId) +
+      "/projects/" + encodeURIComponent(projectId) + "/members");
+  }
+  shareProject(workspaceId: string, projectId: string, subject: string, role: "editor" | "viewer") {
+    return this.request<ApiProjectMember>("v1/workspaces/" + encodeURIComponent(workspaceId) +
+      "/projects/" + encodeURIComponent(projectId) + "/members", "POST", {subject, role});
+  }
+  unshareProject(workspaceId: string, projectId: string, subject: string) {
+    return this.request<void>("v1/workspaces/" + encodeURIComponent(workspaceId) +
+      "/projects/" + encodeURIComponent(projectId) + "/members/" + encodeURIComponent(subject), "DELETE");
   }
   listCompanies(workspaceId: string) {
     return this.request<ApiCompany[]>("v1/workspaces/" + encodeURIComponent(workspaceId) + "/companies");
