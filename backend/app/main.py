@@ -12,7 +12,8 @@ from app.db import get_db, get_health_db
 from app.models import AuditEvent, Client, Company, CompanyMembership, Membership, Mission, Project, ProjectMembership, Task, Workspace
 from app.schemas import (
     AuditOut, ClientIn, ClientOut, CompanyIn, CompanyOut, MissionIn, MissionOut,
-    ProjectIn, ProjectOut, ProjectPatch, TaskIn, TaskOut, TaskPatch, WorkspaceOut, CompanyGrantIn, CompanyGrantOut,\n    WorkspaceMemberIn, WorkspaceMemberOut, ProjectGrantIn, ProjectGrantOut,
+    ProjectIn, ProjectOut, ProjectPatch, TaskIn, TaskOut, TaskPatch, WorkspaceOut, CompanyGrantIn, CompanyGrantOut,
+    WorkspaceMemberIn, WorkspaceMemberOut, ProjectGrantIn, ProjectGrantOut,
 )
 from app.security import Principal, authorize, authorize_company, authorize_project, authorize_task, get_principal
 
