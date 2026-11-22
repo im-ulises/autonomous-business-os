@@ -134,6 +134,7 @@ GRANT EXECUTE ON FUNCTION autonomous_os_internal.can_manage_workspace(uuid),
   autonomous_os_internal.can_manage_shares(uuid) TO autonomous_os_api;
 
 DROP POLICY IF EXISTS evo_api_project_share ON public.evo_project_memberships;
+DROP POLICY IF EXISTS evo_api_project_share ON public.evo_project_memberships;
 CREATE POLICY evo_api_project_share ON public.evo_project_memberships
   FOR ALL TO autonomous_os_api
   USING (subject=(SELECT current_setting('app.subject',true))
@@ -145,14 +146,17 @@ CREATE POLICY evo_api_project_share ON public.evo_project_memberships
 -- Initial owner bootstrap is performed separately by a trusted operator.
 GRANT INSERT, DELETE ON public.evo_memberships TO autonomous_os_api;
 DROP POLICY IF EXISTS evo_api_scope ON public.evo_memberships;
+DROP POLICY IF EXISTS evo_api_members_select ON public.evo_memberships;
 CREATE POLICY evo_api_members_select ON public.evo_memberships
   FOR SELECT TO autonomous_os_api
   USING (subject=(SELECT current_setting('app.subject',true))
          OR autonomous_os_internal.can_manage_workspace(workspace_id));
+DROP POLICY IF EXISTS evo_api_members_insert ON public.evo_memberships;
 CREATE POLICY evo_api_members_insert ON public.evo_memberships
   FOR INSERT TO autonomous_os_api
   WITH CHECK (role IN ('editor','viewer')
               AND autonomous_os_internal.can_manage_workspace(workspace_id));
+DROP POLICY IF EXISTS evo_api_members_delete ON public.evo_memberships;
 CREATE POLICY evo_api_members_delete ON public.evo_memberships
   FOR DELETE TO autonomous_os_api
   USING (role <> 'owner'
@@ -161,9 +165,11 @@ CREATE POLICY evo_api_members_delete ON public.evo_memberships
 -- Company visibility stays tied to company grants. A project guest never sees
 -- its company's other clients, proposals, employees or unrelated projects.
 DROP POLICY IF EXISTS evo_api_scope ON public.evo_companies;
+DROP POLICY IF EXISTS evo_api_company_select ON public.evo_companies;
 CREATE POLICY evo_api_company_select ON public.evo_companies
   FOR SELECT TO autonomous_os_api
   USING (autonomous_os_internal.can_company(id,false));
+DROP POLICY IF EXISTS evo_api_company_insert ON public.evo_companies;
 CREATE POLICY evo_api_company_insert ON public.evo_companies
   FOR INSERT TO autonomous_os_api
   WITH CHECK (
@@ -173,58 +179,74 @@ CREATE POLICY evo_api_company_insert ON public.evo_companies
         AND m.subject=(SELECT current_setting('app.subject',true))
         AND m.role='owner')
   );
+DROP POLICY IF EXISTS evo_api_company_update ON public.evo_companies;
 CREATE POLICY evo_api_company_update ON public.evo_companies
   FOR UPDATE TO autonomous_os_api
   USING (autonomous_os_internal.can_company(id,true))
   WITH CHECK (autonomous_os_internal.can_company(id,true));
+DROP POLICY IF EXISTS evo_api_company_delete ON public.evo_companies;
 CREATE POLICY evo_api_company_delete ON public.evo_companies
   FOR DELETE TO autonomous_os_api
   USING (autonomous_os_internal.can_company(id,true));
 
 DROP POLICY IF EXISTS evo_api_scope ON public.evo_projects;
+DROP POLICY IF EXISTS evo_api_project_select ON public.evo_projects;
 CREATE POLICY evo_api_project_select ON public.evo_projects
   FOR SELECT TO autonomous_os_api
   USING (autonomous_os_internal.can_project(id,false));
+DROP POLICY IF EXISTS evo_api_project_insert ON public.evo_projects;
 CREATE POLICY evo_api_project_insert ON public.evo_projects
   FOR INSERT TO autonomous_os_api
   WITH CHECK (autonomous_os_internal.can_company(company_id,true));
+DROP POLICY IF EXISTS evo_api_project_update ON public.evo_projects;
 CREATE POLICY evo_api_project_update ON public.evo_projects
   FOR UPDATE TO autonomous_os_api
   USING (autonomous_os_internal.can_project(id,true))
   WITH CHECK (autonomous_os_internal.can_project(id,true));
+DROP POLICY IF EXISTS evo_api_project_delete ON public.evo_projects;
 CREATE POLICY evo_api_project_delete ON public.evo_projects
   FOR DELETE TO autonomous_os_api
   USING (autonomous_os_internal.can_project(id,true));
 
 -- Project descendants must not become writable to viewers via FOR ALL policies.
 DROP POLICY IF EXISTS evo_api_scope ON public.evo_tasks;
+DROP POLICY IF EXISTS evo_api_task_select ON public.evo_tasks;
 CREATE POLICY evo_api_task_select ON public.evo_tasks FOR SELECT TO autonomous_os_api
   USING (autonomous_os_internal.can_project(project_id,false));
+DROP POLICY IF EXISTS evo_api_task_insert ON public.evo_tasks;
 CREATE POLICY evo_api_task_insert ON public.evo_tasks FOR INSERT TO autonomous_os_api
   WITH CHECK (autonomous_os_internal.can_project(project_id,true));
+DROP POLICY IF EXISTS evo_api_task_update ON public.evo_tasks;
 CREATE POLICY evo_api_task_update ON public.evo_tasks FOR UPDATE TO autonomous_os_api
   USING (autonomous_os_internal.can_project(project_id,true))
   WITH CHECK (autonomous_os_internal.can_project(project_id,true));
+DROP POLICY IF EXISTS evo_api_task_delete ON public.evo_tasks;
 CREATE POLICY evo_api_task_delete ON public.evo_tasks FOR DELETE TO autonomous_os_api
   USING (autonomous_os_internal.can_project(project_id,true));
 
 DROP POLICY IF EXISTS evo_api_scope ON public.evo_project_details;
+DROP POLICY IF EXISTS evo_api_details_select ON public.evo_project_details;
 CREATE POLICY evo_api_details_select ON public.evo_project_details FOR SELECT TO autonomous_os_api
   USING (autonomous_os_internal.can_project(project_id,false));
+DROP POLICY IF EXISTS evo_api_details_write ON public.evo_project_details;
 CREATE POLICY evo_api_details_write ON public.evo_project_details FOR ALL TO autonomous_os_api
   USING (autonomous_os_internal.can_project(project_id,true))
   WITH CHECK (autonomous_os_internal.can_project(project_id,true));
 
 DROP POLICY IF EXISTS evo_api_scope ON public.evo_deliverables;
+DROP POLICY IF EXISTS evo_api_deliverable_select ON public.evo_deliverables;
 CREATE POLICY evo_api_deliverable_select ON public.evo_deliverables FOR SELECT TO autonomous_os_api
   USING (autonomous_os_internal.can_project(project_id,false));
+DROP POLICY IF EXISTS evo_api_deliverable_write ON public.evo_deliverables;
 CREATE POLICY evo_api_deliverable_write ON public.evo_deliverables FOR ALL TO autonomous_os_api
   USING (autonomous_os_internal.can_project(project_id,true))
   WITH CHECK (autonomous_os_internal.can_project(project_id,true));
 
 DROP POLICY IF EXISTS evo_api_scope ON public.evo_software_roadmaps;
+DROP POLICY IF EXISTS evo_api_roadmap_select ON public.evo_software_roadmaps;
 CREATE POLICY evo_api_roadmap_select ON public.evo_software_roadmaps FOR SELECT TO autonomous_os_api
   USING (autonomous_os_internal.can_project(project_id,false));
+DROP POLICY IF EXISTS evo_api_roadmap_write ON public.evo_software_roadmaps;
 CREATE POLICY evo_api_roadmap_write ON public.evo_software_roadmaps FOR ALL TO autonomous_os_api
   USING (autonomous_os_internal.can_project(project_id,true))
   WITH CHECK (autonomous_os_internal.can_project(project_id,true));
