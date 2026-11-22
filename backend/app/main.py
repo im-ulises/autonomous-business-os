@@ -5,14 +5,14 @@ from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, text
+from sqlalchemy import select, text, or_, delete
 from sqlalchemy.orm import Session
 
 from app.db import get_db, get_health_db
-from app.models import AuditEvent, Client, Company, CompanyMembership, Membership, Mission, Project, Task, Workspace
+from app.models import AuditEvent, Client, Company, CompanyMembership, Membership, Mission, Project, ProjectMembership, Task, Workspace
 from app.schemas import (
     AuditOut, ClientIn, ClientOut, CompanyIn, CompanyOut, MissionIn, MissionOut,
-    ProjectIn, ProjectOut, ProjectPatch, TaskIn, TaskOut, TaskPatch, WorkspaceOut, CompanyGrantIn, CompanyGrantOut,
+    ProjectIn, ProjectOut, ProjectPatch, TaskIn, TaskOut, TaskPatch, WorkspaceOut, CompanyGrantIn, CompanyGrantOut,\n    WorkspaceMemberIn, WorkspaceMemberOut, ProjectGrantIn, ProjectGrantOut,
 )
 from app.security import Principal, authorize, authorize_company, authorize_project, authorize_task, get_principal
 
@@ -173,9 +173,22 @@ def create_client(workspace_id: UUID, payload: ClientIn, db: Session = Depends(g
 
 @app.get("/v1/workspaces/{workspace_id}/projects", response_model=list[ProjectOut])
 def projects(workspace_id: UUID, company_id: UUID, db: Session = Depends(get_db), actor: Principal = Depends(get_principal)):
-    authorize(db, workspace_id, actor)
-    company_for(db, workspace_id, company_id, actor)
-    return db.scalars(select(Project).where(Project.company_id == company_id).order_by(Project.created_at.desc())).all()
+    member = authorize(db, workspace_id, actor)
+    # Project shares do not require access to the full company.
+    # DB FORCE RLS enforces the same filter, including direct SQL calls.
+    query = select(Project).where(Project.company_id == company_id)
+    if member.role != "owner":
+        query = query.where(or_(
+            Project.id.in_(select(ProjectMembership.project_id).where(
+                ProjectMembership.subject == actor.subject)),
+            Project.company_id.in_(select(CompanyMembership.company_id).where(
+                CompanyMembership.subject == actor.subject)),
+        ))
+    if db.get_bind().dialect.name != "postgresql":
+        company = db.get(Company, company_id)
+        if company is None or company.workspace_id != workspace_id:
+            raise HTTPException(status_code=404, detail="Company not found in workspace")
+    return db.scalars(query.order_by(Project.created_at.desc())).all()
 
 
 @app.post("/v1/workspaces/{workspace_id}/projects", response_model=ProjectOut, status_code=201)
@@ -306,6 +319,139 @@ def revoke_company(workspace_id: UUID, company_id: UUID, subject: str, db: Sessi
     db.commit()
     return None
 
+
+
+@app.get("/v1/workspaces/{workspace_id}/members", response_model=list[WorkspaceMemberOut])
+def workspace_members(
+    workspace_id: UUID, db: Session = Depends(get_db),
+    actor: Principal = Depends(get_principal),
+):
+    authorize(db, workspace_id, actor, owner=True)
+    return db.scalars(
+        select(Membership).where(Membership.workspace_id == workspace_id)
+        .order_by(Membership.role, Membership.subject)
+    ).all()
+
+
+@app.post("/v1/workspaces/{workspace_id}/members", response_model=WorkspaceMemberOut, status_code=201)
+def add_workspace_member(
+    workspace_id: UUID, payload: WorkspaceMemberIn,
+    db: Session = Depends(get_db), actor: Principal = Depends(get_principal),
+):
+    authorize(db, workspace_id, actor, owner=True)
+    subject = str(payload.subject)
+    if subject == actor.subject:
+        raise HTTPException(status_code=422, detail="Owner cannot self-demote")
+    if db.get(Membership, (workspace_id, subject)) is not None:
+        raise HTTPException(status_code=409, detail="Workspace member already exists")
+    # Only use subject UUIDs obtained from verified Supabase Auth sessions.
+    member = Membership(workspace_id=workspace_id, subject=subject, role=payload.role)
+    db.add(member)
+    db.flush()
+    audit(db, workspace_id, actor, "grant", "workspace_membership", workspace_id)
+    db.commit()
+    return member
+
+
+@app.delete("/v1/workspaces/{workspace_id}/members/{subject}", status_code=204)
+def remove_workspace_member(
+    workspace_id: UUID, subject: str, db: Session = Depends(get_db),
+    actor: Principal = Depends(get_principal),
+):
+    authorize(db, workspace_id, actor, owner=True)
+    member = db.get(Membership, (workspace_id, subject))
+    if member is None:
+        raise HTTPException(status_code=404, detail="Workspace member not found")
+    if member.role == "owner":
+        raise HTTPException(status_code=403, detail="Cannot remove workspace owner")
+    company_ids = select(Company.id).where(Company.workspace_id == workspace_id)
+    project_ids = select(Project.id).where(Project.company_id.in_(company_ids))
+    # Explicitly revoke shares first, so re-inviting doesn't restore old access.
+    db.execute(delete(ProjectMembership).where(
+        ProjectMembership.subject == subject,
+        ProjectMembership.project_id.in_(project_ids),
+    ))
+    db.execute(delete(CompanyMembership).where(
+        CompanyMembership.subject == subject,
+        CompanyMembership.company_id.in_(company_ids),
+    ))
+    db.delete(member)
+    audit(db, workspace_id, actor, "revoke", "workspace_membership", workspace_id)
+    db.commit()
+    return None
+
+
+@app.get("/v1/workspaces/{workspace_id}/shared-projects", response_model=list[ProjectOut])
+def shared_projects(
+    workspace_id: UUID, db: Session = Depends(get_db),
+    actor: Principal = Depends(get_principal),
+):
+    authorize(db, workspace_id, actor)
+    projects = db.scalars(
+        select(Project).join(ProjectMembership, ProjectMembership.project_id == Project.id)
+        .where(ProjectMembership.subject == actor.subject)
+        .order_by(Project.created_at.desc())
+    ).all()
+    if db.get_bind().dialect.name != "postgresql":
+        projects = [p for p in projects
+                    if db.get(Company, p.company_id).workspace_id == workspace_id]
+    return projects
+
+
+@app.get("/v1/workspaces/{workspace_id}/projects/{project_id}/members",
+         response_model=list[ProjectGrantOut])
+def project_shares(
+    workspace_id: UUID, project_id: UUID, db: Session = Depends(get_db),
+    actor: Principal = Depends(get_principal),
+):
+    authorize(db, workspace_id, actor, owner=True)
+    project_for(db, workspace_id, project_id, actor)
+    return db.scalars(
+        select(ProjectMembership).where(ProjectMembership.project_id == project_id)
+        .order_by(ProjectMembership.created_at)
+    ).all()
+
+
+@app.post("/v1/workspaces/{workspace_id}/projects/{project_id}/members",
+          response_model=ProjectGrantOut, status_code=201)
+def grant_project_share(
+    workspace_id: UUID, project_id: UUID, payload: ProjectGrantIn,
+    db: Session = Depends(get_db), actor: Principal = Depends(get_principal),
+):
+    authorize(db, workspace_id, actor, owner=True)
+    project_for(db, workspace_id, project_id, actor)
+    subject = str(payload.subject)
+    member = db.get(Membership, (workspace_id, subject))
+    if member is None:
+        raise HTTPException(status_code=422, detail="Subject must join workspace first")
+    if member.role == "viewer" and payload.role == "editor":
+        raise HTTPException(status_code=422, detail="Workspace viewer cannot edit projects")
+    if db.get(ProjectMembership, (project_id, subject)) is not None:
+        raise HTTPException(status_code=409, detail="Project membership already exists")
+    grant = ProjectMembership(project_id=project_id, subject=subject,
+                              role=payload.role, granted_by=actor.subject)
+    db.add(grant)
+    db.flush()
+    audit(db, workspace_id, actor, "grant", "project_membership", project_id)
+    db.commit()
+    return grant
+
+
+@app.delete("/v1/workspaces/{workspace_id}/projects/{project_id}/members/{subject}",
+            status_code=204)
+def revoke_project_share(
+    workspace_id: UUID, project_id: UUID, subject: str,
+    db: Session = Depends(get_db), actor: Principal = Depends(get_principal),
+):
+    authorize(db, workspace_id, actor, owner=True)
+    project_for(db, workspace_id, project_id, actor)
+    grant = db.get(ProjectMembership, (project_id, subject))
+    if grant is None:
+        raise HTTPException(status_code=404, detail="Project membership not found")
+    db.delete(grant)
+    audit(db, workspace_id, actor, "revoke", "project_membership", project_id)
+    db.commit()
+    return None
 
 # Business modules are kept outside the core CRUD service for independent evolution.
 from app.business_api import router as business_router
