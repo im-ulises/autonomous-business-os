@@ -40,7 +40,7 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalo
         AND m.subject=current_setting('app.subject',true)
         AND m.role='owner'
     );
-$;
+$$;
 
 CREATE OR REPLACE FUNCTION autonomous_os_internal.can_company(p_company uuid, p_write boolean)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog AS $$
