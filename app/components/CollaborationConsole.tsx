@@ -178,6 +178,8 @@ export function CollaborationConsole() {
     </div></main>
   );
 
+  const liveApi = api as AutonomousApiClient;
+  const liveSupabase = supabase!;
   return (
     <main className="collab-app">
       <header className="collab-header">
@@ -185,7 +187,7 @@ export function CollaborationConsole() {
         <div className="collab-user">
           <span>{session.user.email || "Cuenta autenticada"}</span>
           <button className="collab-ghost" onClick={() => void perform(async () => {
-            const { error: authError } = await supabase.auth.signOut();
+            const { error: authError } = await liveSupabase.auth.signOut();
             if (authError) throw authError;
           })}>Salir</button>
         </div>
@@ -230,14 +232,14 @@ export function CollaborationConsole() {
                 <h2>Administración</h2>
                 <div className="collab-form-row">
                   <form onSubmit={e => {e.preventDefault();void perform(async () => {
-                    await api.createCompany(workspaceId,companyName.trim());
+                    await liveApi.createCompany(workspaceId,companyName.trim());
                     await refreshProjects(); setCompanyName("");
                   });}}>
                     <label>Crear empresa</label><input required value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Nombre"/>
                     <button disabled={busy}>Crear</button>
                   </form>
                   <form onSubmit={e => {e.preventDefault();void perform(async () => {
-                    await api.createProject(workspaceId,companyId,projectName.trim());
+                    await liveApi.createProject(workspaceId,companyId,projectName.trim());
                     await refreshProjects(); setProjectName("");
                   });}}>
                     <label>Crear proyecto</label>
@@ -257,7 +259,7 @@ export function CollaborationConsole() {
                   {members.map(m => <span key={m.subject}>{m.subject === session.user.id ? "Tu cuenta" : m.subject.slice(0, 8) + "…"} · {m.role}</span>)}
                 </div>
                 <form className="collab-inline" onSubmit={e => {e.preventDefault();void perform(async () => {
-                  await api.addWorkspaceMember(workspaceId,newMemberId.trim(),newMemberRole);
+                  await liveApi.addWorkspaceMember(workspaceId,newMemberId.trim(),newMemberRole);
                   setNewMemberId(""); await refreshProjects();
                 });}}>
                   <input required value={newMemberId} onChange={e => setNewMemberId(e.target.value)} placeholder="ID verificado del segundo usuario"/>
@@ -274,7 +276,7 @@ export function CollaborationConsole() {
                 {tasks.map(t => <div className="collab-task" key={t.id}>
                   <span>{t.title}</span><select aria-label={"Estado de " + t.title} value={t.status}
                     disabled={busy} onChange={e => void perform(async () => {
-                      await api.updateTask(workspaceId,t.id,e.target.value as ApiTask["status"]);
+                      await liveApi.updateTask(workspaceId,t.id,e.target.value as ApiTask["status"]);
                       await refreshSelected();
                     })}>
                     <option value="todo">Pendiente</option><option value="doing">En curso</option>
@@ -282,7 +284,7 @@ export function CollaborationConsole() {
                   </select>
                 </div>)}
                 <form className="collab-inline" onSubmit={e => {e.preventDefault();void perform(async () => {
-                  await api.createTask(workspaceId,selected.id,taskName.trim());
+                  await liveApi.createTask(workspaceId,selected.id,taskName.trim());
                   setTaskName(""); await refreshSelected();
                 });}}>
                   <input required value={taskName} onChange={e => setTaskName(e.target.value)} placeholder="Nueva tarea"/>
@@ -295,11 +297,11 @@ export function CollaborationConsole() {
                 {shares.map(s => <div className="collab-task" key={s.subject}>
                   <span>{members.find(m => m.subject === s.subject)?.subject.slice(0,8) || s.subject.slice(0,8)}… · {s.role}</span>
                   <button className="collab-ghost" disabled={busy} onClick={() => void perform(async () => {
-                    await api.unshareProject(workspaceId,selected.id,s.subject);await refreshSelected();
+                    await liveApi.unshareProject(workspaceId,selected.id,s.subject);await refreshSelected();
                   })}>Quitar acceso</button>
                 </div>)}
                 <form className="collab-inline" onSubmit={e => {e.preventDefault();void perform(async () => {
-                  await api.shareProject(workspaceId,selected.id,shareSubject,shareRole);
+                  await liveApi.shareProject(workspaceId,selected.id,shareSubject,shareRole);
                   setShareSubject("");await refreshSelected();
                 });}}>
                   <select required value={shareSubject} onChange={e => setShareSubject(e.target.value)}>
