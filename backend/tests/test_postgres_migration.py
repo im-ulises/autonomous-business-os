@@ -153,7 +153,7 @@ def test_project_share_rls_grants_only_one_project_and_no_company_records():
             db.execute("SELECT set_config('app.authorized_workspace',%s,true)", (str(wid),))
             assert db.execute("SELECT name FROM evo_projects").fetchall() == [("Share me",)]
             assert db.execute("SELECT title FROM evo_tasks ORDER BY title").fetchall() == [
-                ("Collaborate",),("Dad edit",)]
+                ("Collaborate",),("Dad edit",)
             ]
             with pytest.raises(psycopg.errors.InsufficientPrivilege):
                 with db.transaction():
