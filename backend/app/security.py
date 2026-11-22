@@ -13,7 +13,7 @@ from jwt import PyJWKClient, PyJWTError, PyJWKSet
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from app.models import Membership, Company, CompanyMembership, Project, Task
+from app.models import Membership, Company, CompanyMembership, Project, ProjectMembership, Task
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -147,13 +147,28 @@ def authorize_project(
     db: Session, workspace_id: UUID, project_id: UUID, principal: Principal,
     *, write: bool = False,
 ) -> Project:
-    project = db.scalar(
-        select(Project).join(Company, Project.company_id == Company.id)
-        .where(Project.id == project_id, Company.workspace_id == workspace_id)
-    )
+    """Project guests may work without being granted the whole company."""
+    member = authorize(db, workspace_id, principal, write=write)
+    project = db.get(Project, project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found in workspace")
-    authorize_company(db, workspace_id, project.company_id, principal, write=write)
+
+    # In production, FORCE RLS verifies company.workspace and project membership
+    # before Project can be selected. SQLite tests need this explicit equivalent.
+    if db.get_bind().dialect.name != "postgresql":
+        company = db.get(Company, project.company_id)
+        if company is None or company.workspace_id != workspace_id:
+            raise HTTPException(status_code=404, detail="Project not found in workspace")
+
+    if member.role == "owner":
+        return project
+    company_grant = db.get(CompanyMembership, (project.company_id, principal.subject))
+    project_grant = db.get(ProjectMembership, (project.id, principal.subject))
+    if not (
+        (company_grant is not None and (not write or company_grant.role == "editor"))
+        or (project_grant is not None and (not write or project_grant.role == "editor"))
+    ):
+        raise HTTPException(status_code=403, detail="No access to this project")
     return project
 
 
@@ -161,12 +176,9 @@ def authorize_task(
     db: Session, workspace_id: UUID, task_id: UUID, principal: Principal,
     *, write: bool = False,
 ) -> Task:
-    task = db.scalar(
-        select(Task).join(Project, Task.project_id == Project.id)
-        .join(Company, Project.company_id == Company.id)
-        .where(Task.id == task_id, Company.workspace_id == workspace_id)
-    )
+    authorize(db, workspace_id, principal, write=write)
+    task = db.get(Task, task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found in workspace")
-    authorize_company(db, workspace_id, db.get(Project, task.project_id).company_id, principal, write=write)
+    authorize_project(db, workspace_id, task.project_id, principal, write=write)
     return task

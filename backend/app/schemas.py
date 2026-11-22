@@ -165,3 +165,28 @@ class CompanyGrantOut(Out):
     company_id: UUID
     subject: str
     role: Literal["editor", "viewer"]
+
+
+class WorkspaceMemberIn(BaseModel):
+    # Supabase Auth user UUID after real login/verification, never an email guess.
+    subject: UUID
+    role: Literal["editor", "viewer"] = "editor"
+
+
+class WorkspaceMemberOut(Out):
+    workspace_id: UUID
+    subject: str
+    role: Literal["owner", "editor", "viewer"]
+
+
+class ProjectGrantIn(BaseModel):
+    subject: UUID
+    role: Literal["editor", "viewer"] = "editor"
+
+
+class ProjectGrantOut(Out):
+    project_id: UUID
+    subject: str
+    role: Literal["editor", "viewer"]
+    granted_by: str
+    created_at: datetime
