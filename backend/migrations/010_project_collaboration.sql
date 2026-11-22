@@ -31,6 +31,17 @@ GRANT SELECT, INSERT, DELETE ON public.evo_project_memberships TO autonomous_os_
 
 -- All helpers use only server-validated session settings. They have no user-
 -- supplied subject or workspace argument and are not callable by browser roles.
+CREATE OR REPLACE FUNCTION autonomous_os_internal.can_manage_workspace(p_workspace uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog AS $
+  SELECT p_workspace=NULLIF(current_setting('app.authorized_workspace',true),'')::uuid
+    AND EXISTS (
+      SELECT 1 FROM public.evo_memberships m
+      WHERE m.workspace_id=p_workspace
+        AND m.subject=current_setting('app.subject',true)
+        AND m.role='owner'
+    );
+$;
+
 CREATE OR REPLACE FUNCTION autonomous_os_internal.can_company(p_company uuid, p_write boolean)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog AS $$
   SELECT EXISTS (
@@ -112,11 +123,13 @@ CREATE TRIGGER evo_validate_project_share
   BEFORE INSERT OR UPDATE ON public.evo_project_memberships
   FOR EACH ROW EXECUTE FUNCTION autonomous_os_internal.validate_project_share();
 
+REVOKE ALL ON FUNCTION autonomous_os_internal.can_manage_workspace(uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION autonomous_os_internal.can_company(uuid,boolean) FROM PUBLIC;
 REVOKE ALL ON FUNCTION autonomous_os_internal.can_project(uuid,boolean) FROM PUBLIC;
 REVOKE ALL ON FUNCTION autonomous_os_internal.can_manage_shares(uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION autonomous_os_internal.validate_project_share() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION autonomous_os_internal.can_company(uuid,boolean),
+GRANT EXECUTE ON FUNCTION autonomous_os_internal.can_manage_workspace(uuid),
+  autonomous_os_internal.can_company(uuid,boolean),
   autonomous_os_internal.can_project(uuid,boolean),
   autonomous_os_internal.can_manage_shares(uuid) TO autonomous_os_api;
 
@@ -126,6 +139,24 @@ CREATE POLICY evo_api_project_share ON public.evo_project_memberships
   USING (subject=(SELECT current_setting('app.subject',true))
          OR autonomous_os_internal.can_manage_shares(project_id))
   WITH CHECK (autonomous_os_internal.can_manage_shares(project_id));
+
+
+-- The API owner can enroll only an already-authenticated provider subject.
+-- Initial owner bootstrap is performed separately by a trusted operator.
+GRANT INSERT, DELETE ON public.evo_memberships TO autonomous_os_api;
+DROP POLICY IF EXISTS evo_api_scope ON public.evo_memberships;
+CREATE POLICY evo_api_members_select ON public.evo_memberships
+  FOR SELECT TO autonomous_os_api
+  USING (subject=(SELECT current_setting('app.subject',true))
+         OR autonomous_os_internal.can_manage_workspace(workspace_id));
+CREATE POLICY evo_api_members_insert ON public.evo_memberships
+  FOR INSERT TO autonomous_os_api
+  WITH CHECK (role IN ('editor','viewer')
+              AND autonomous_os_internal.can_manage_workspace(workspace_id));
+CREATE POLICY evo_api_members_delete ON public.evo_memberships
+  FOR DELETE TO autonomous_os_api
+  USING (role <> 'owner'
+         AND autonomous_os_internal.can_manage_workspace(workspace_id));
 
 -- Company visibility stays tied to company grants. A project guest never sees
 -- its company's other clients, proposals, employees or unrelated projects.
